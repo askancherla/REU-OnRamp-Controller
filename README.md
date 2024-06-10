@@ -35,3 +35,5 @@ The program models the merging behavior of vehicles using high-fidelity microsim
 
 ### V2V Communication
 The core idea of using V2V communication for coordinating the merging of on-ramp vehicles with mainline traffic is implemented through the functions that manage speed coordination, gap alignment, and virtual platoon control.
+
+-Based on the research paper: https://ieeexplore.ieee.org/abstract/document/7835933
