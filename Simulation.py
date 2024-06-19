@@ -1,4 +1,5 @@
 from Vehicle import Vehicle   # import the Vehicle class from Vehicle.py
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -143,9 +144,34 @@ class Simulation:
         self.plot_results()
 
     def plot_results(self):
-        print("A")
-        # x-axis (timestep)
-        # y-axis (Pos of all CAVS)
+        fig, axs = plt.subplots(3, 1, figsize=(14, 18), sharex=True)
+
+        time = np.arange(0, self.total_time / self.dt) * self.dt
+
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            axs[0].plot(time, self.Veh_Pos_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
+            axs[0].set_ylabel('Position (m)')
+            axs[0].set_title('Vehicle Positions Over Time')
+            axs[0].legend(loc='upper left')
+
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            axs[1].plot(time, self.Veh_Vel_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
+            axs[1].set_ylabel('Velocity (m/s)')
+            axs[1].set_title('Vehicle Velocities Over Time')
+
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            axs[2].plot(time, self.Veh_Acc_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
+            axs[2].set_ylabel('Acceleration (m/s²)')
+            axs[2].set_title('Vehicle Accelerations Over Time')
+
+        axs[2].set_xlabel('Time (s)')
+    
+        plt.tight_layout()
+        plt.show()
+
 
 
 if __name__ == '__main__':
