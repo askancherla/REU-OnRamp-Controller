@@ -25,9 +25,9 @@ class Vehicle():
         self.minVel = 5    # m/s
         self.maxVel = 30   # m/s= 108km/h ~= 67 mph
         self.comfortable_Acc = 1       # m/(s^2)
-        self.safe_time_headway = 1.5   # second
+        self.safe_time_headway = 1.1   # second
         self.min_gap = 2               # meters
-        self.desired_Vel = 20          # m/s
+        self.desired_ffVel = 35          # m/s, desired speed in free-flow traffic conditions
 
     ###########################################################################################
     # Assume each CAV could get all CAVs' state initially for implementation (include itself),
@@ -65,28 +65,30 @@ class Vehicle():
     #########################################################################################################
 
     def manualDriverModel(self):
-        ffspeed = 35  # free flow speed m/s
         alpha = 3  # sensitivity exponent
 
         self.Acc = max(min(
-            self.maxAcc*(1-((self.Vel)/(ffspeed))**alpha), self.maxAcc), self.minAcc)
-        # print(f"CAV{self.id}'s acc is {self.Acc} from MDM")
+            self.maxAcc*(1-((self.Vel)/(self.desired_ffVel))**alpha), self.maxAcc), self.minAcc)
+        # print(f"CAV{self.id}'s vel is {self.Vel} from MDM")
+        print(f"CAV{self.id}'s acc is {self.Acc} from MDM")
 
     #####################################################################################
     # Acc of each vehicle if it has a vehicle to follow.
     # Based on the paper
-    # [Congested Traffic States in Empirical Observations and Microscopic Simulations]
+    # [Modeling cooperative and autonomous adaptive cruise control dynamic responses using experimental data]
     #####################################################################################
 
     # the self vehicle should find its physical preceding vehicle based on "vehiclesInfo"
     def intelligent_driver_model(self):
         # IDM parameters
+        # minimum steady-state time gap (from paper)
         T = self.safe_time_headway
-        a = self.maxAcc
-        b = self.comfortable_Acc
-        delta = 4
-        s0 = self.min_gap
-        v0 = self.desired_Vel
+        a = self.maxAcc              #
+        b = 2                        # desired deceleration  (from paper)
+        delta = 4                    # Free acceleration exponent(from paper)
+        # vehicle-vehicle clearance in stand-still situations (from paper)
+        s0 = 0
+        v0 = self.desired_ffVel      # desired speed in free-flow traffic conditions
 
         if self.lane == 0:
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
@@ -98,11 +100,13 @@ class Vehicle():
                 delta_v = self.Vel - self.mainVeh_list[index_mainVeh-1][3]
                 s_star = s0 + max(0, self.Vel * T +
                                   (self.Vel * delta_v) / (2 * np.sqrt(a * b)))
-                gap = self.mainVeh_list[index_mainVeh -
-                                        1][4] - self.length - self.Pos
-                self.Acc = a * (1 - (self.Vel / v0) **
-                                delta - (s_star / gap) ** 2)
-                # print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
+                s = self.mainVeh_list[index_mainVeh -
+                                      1][4] - self.length - self.Pos
+                self.Acc = max(min(a * (1 - (self.Vel / v0) ** delta -
+                               (s_star / s)), self.maxAcc), self.minAcc)
+
+                # print(f"CAV{self.id}'s vel is {self.Vel} from IDM")
+                print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
 
         else:
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
@@ -114,11 +118,13 @@ class Vehicle():
                 delta_v = self.Vel - self.mergeVeh_list[index_mergeVeh-1][3]
                 s_star = s0 + max(0, self.Vel * T +
                                   (self.Vel * delta_v) / (2 * np.sqrt(a * b)))
-                gap = self.mergeVeh_list[index_mergeVeh -
-                                         1][4] - self.length - self.Pos
-                self.Acc = a * (1 - (self.Vel / v0) **
-                                delta - (s_star / gap) ** 2)
-                # print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
+                s = self.mergeVeh_list[index_mergeVeh -
+                                       1][4] - self.length - self.Pos
+                self.Acc = max(min(a * (1 - (self.Vel / v0) **
+                                        delta - (s_star / s)), self.maxAcc), self.minAcc)
+
+                # print(f"CAV{self.id}'s vel is {self.Vel} from IDM")
+                print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
 
     ###########################################################
     # Acc of each vehicle if it is in the merging section.
@@ -142,8 +148,10 @@ class Vehicle():
 
             # calculate the average speed based on subsection "2) Speed coordination" in the paper
             v_ref = sum(main_vel_list)/len(main_vel_list)
-            self.Acc = k * (v_ref - self.Vel)
-            # print(f"CAV{self.id}'s acc is {self.Acc} from speed coordination")
+            self.Acc = max(min(k * (v_ref - self.Vel),
+                           self.maxAcc), self.minAcc)
+            # print(f"CAV{self.id}'s vel is {self.Vel} from speed coordination")
+            print(f"CAV{self.id}'s acc is {self.Acc} from speed coordination")
 
     # Gap alignment (finding VL and VF)
     # This function should be run only on the ramp vehicles!!!
@@ -159,12 +167,20 @@ class Vehicle():
                     (self.mainVeh_list[i][4], self.mainVeh_list[i][0]))  # (pos, id)
 
             # main_pos_id_list should be sorted based on the position (large to small)
-            for i in range(len(main_pos_id_list)-1):
-                if main_pos_id_list[i][0] >= self.Pos >= main_pos_id_list[i+1][0]:
-                    self.vl_id = main_pos_id_list[i][1]
-                    self.vf_id = main_pos_id_list[i+1][1]
-                # else:
-                #     print(f"Cannot find the VL and VF for merge CAV {self.id}")
+            # if the self vehicle is behind the last mainlane vehicle
+            if self.Pos <= main_pos_id_list[len(main_pos_id_list)-1][0]:
+                self.vl_id = main_pos_id_list[len(main_pos_id_list)-1][1]
+            # if the self vehicle is ahead of the first mainlane vehicle
+            elif self.Pos > main_pos_id_list[0][0]:
+                self.vf_id = main_pos_id_list[0][1]
+            else:
+                for i in range(len(main_pos_id_list)-1):
+                    if main_pos_id_list[i][0] >= self.Pos > main_pos_id_list[i+1][0]:
+                        self.vl_id = main_pos_id_list[i][1]
+                        self.vf_id = main_pos_id_list[i+1][1]
+                    else:
+                        print(
+                            f"Cannot find the VL or VF for merge CAV {self.id}")
 
     # Virtual platoon control (Equation 4)
     # all CAV should share its info about VL and VF before running this function
@@ -175,16 +191,13 @@ class Vehicle():
     def virtual_platoon_control(self, dt):
 
         if self.lane == 1:
-            for index, mergeVeh in enumerate(self.mergeVeh_list):
-                if mergeVeh[0] == self.id:
-                    index_mergeVeh = index    # return the index of self vehicle in the mergeVeh_list
-
-            # if the self merge CAV has its physical preceding CAV, and its vl_id is same as its preceding
+            # if the self merge CAV has its physical preceding CAV, and its vl_id is same as the preceding
             # its vl should be its physical preceding CAV
             # otherwise it should keep its vl_id
-            if index_mergeVeh != 0:
-                if self.vl_id == self.mergeVeh_list[index_mergeVeh-1][5]:
-                    self.vl_id = self.mergeVeh_list[index_mergeVeh-1][0]
+            for i in range(len(self.mergeVeh_list)):
+                if ((self.id == self.mergeVeh_list[i][0]) and (i != 0)):
+                    if self.vl_id == self.mergeVeh_list[i-1][5]:
+                        self.vl_id = self.mergeVeh_list[i-1][0]
 
         else:
             # if self is in mainlane, if will read the vf_id of all merge CAVs,
@@ -200,14 +213,17 @@ class Vehicle():
         hd = 1.3    # [Coordinated Merge Control Based on V2V Communication]
 
         if self.vl_id != 0:
-            # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
+            # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
             for index, Veh in enumerate(self.vehiclesInfo):
                 if self.vl_id == Veh[5]:
-                    self.Vel = self.prev_Vel + kp*(self.Pos - self.vehiclesInfo[index][4]-hd*self.prev_Vel) + kd*(
-                        self.vehiclesInfo[index][3]-self.prev_Vel-hd*self.Acc)
-                    self.Acc = (self.Vel-self.prev_Vel)/dt
-                    # print(
-                    #     f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
+                    self.vp_Vel = self.Vel + kp*(self.Pos - self.vehiclesInfo[index][4]-hd*self.Vel) + kd*(
+                        self.Vel-self.vehiclesInfo[index][3]-hd*self.Acc)
+                    self.Acc = max(min((self.vp_Vel-self.Vel)/dt,
+                                       self.maxAcc), self.minAcc)
+                    print(
+                        f"CAV{self.id}'s vel is {self.Vel} from virtual platoon control")
+                    print(
+                        f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
 
     # Function to update position and speed
 

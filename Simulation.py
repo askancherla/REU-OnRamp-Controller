@@ -85,6 +85,8 @@ class Simulation:
 
         for t in np.arange(0, self.total_time, self.dt):
             """1. Each CAV shares its info to others"""
+            self.veh_transmitInfo_list = [
+            ]   # empty the self.veh_transmitInfo_list before collecting information
             for veh in self.vehicles:
                 # veh_transmitInfo should be a list with element [id, lane, Acc, Vel, Pos, vl_id, vf_id)
                 veh_transmitInfo = veh.transmitInfo()
@@ -107,10 +109,14 @@ class Simulation:
                 veh.gap_alignment()        # merge CAV will change its vl_id and vf_id
 
             """4. Each CAV shares its info to others (especially updated vl_id and vf_id)"""
+            self.veh_transmitInfo_list = []  # empty the self.veh_transmitInfo_list
             for veh in self.vehicles:
-                # tuple (id, lane, Acc, Vel, Pos, vl_id, vf_id)
+                # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
                 veh_transmitInfo = veh.transmitInfo()
                 self.veh_transmitInfo_list.append(veh_transmitInfo)
+
+            print(
+                f"Info list before virtual platooning, {self.veh_transmitInfo_list}")
 
             """5. Each CAV updates its acc based on virtual platooning"""
             for veh in self.vehicles:
@@ -157,3 +163,6 @@ if __name__ == '__main__':
     sim = Simulation(vehicles, 60, 0.1)
     if sim.check == 1:
         sim.mergeSimulator()
+        print(f"Position Plot: {sim.Veh_Pos_plot}")
+        print(f"Velocity Plot: {sim.Veh_Vel_plot}")
+        print(f"Acc Plot: {sim.Veh_Acc_plot}")
