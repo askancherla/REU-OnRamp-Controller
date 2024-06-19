@@ -22,8 +22,8 @@ class Simulation:
         #  ...
         #  [                           ]]
 
-        self.total_time = total_time
-        self.dt = time_interval
+        self.total_time = total_time*10
+        self.dt = time_interval*10
         self.Veh_Pos_plot = pd.DataFrame(0, index=range(
             int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])  # initialize a dataframe for ploting. rows: # of time step, column: # of CAVs
         self.Veh_Vel_plot = pd.DataFrame(0, index=range(
