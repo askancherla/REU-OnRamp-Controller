@@ -34,6 +34,12 @@ class Simulation:
         # 0 if there is something wrong in the initial settings, otherwise 1
         self.check = self.mergeInitialCheck()
 
+        # for debugging purpose
+        self.Veh_vl_id_plot = pd.DataFrame(0, index=range(
+            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
+        self.Veh_vf_id_plot = pd.DataFrame(0, index=range(
+            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
+
     ##################################################
     # Check the initial settings of all CAVs object
     ##################################################
@@ -116,8 +122,8 @@ class Simulation:
                 veh_transmitInfo = veh.transmitInfo()
                 self.veh_transmitInfo_list.append(veh_transmitInfo)
 
-            print(
-                f"Info list before virtual platooning, {self.veh_transmitInfo_list}")
+            # print(
+            #     f"Info list before virtual platooning at time step {t}, {self.veh_transmitInfo_list}")
 
             """5. Each CAV updates its acc based on virtual platooning"""
             for veh in self.vehicles:
@@ -134,6 +140,8 @@ class Simulation:
                 self.Veh_Pos_plot.loc[t, veh.id] = veh.Pos
                 self.Veh_Vel_plot.loc[t, veh.id] = veh.Vel
                 self.Veh_Acc_plot.loc[t, veh.id] = veh.Acc
+                self.Veh_vl_id_plot.loc[t, veh.id] = veh.vl_id
+                self.Veh_vf_id_plot.loc[t, veh.id] = veh.vf_id
 
                 # (Pos)                           CAV_ID1,    CAV_ID2,  ....  ,CAV_id -3,
                 # step = 0                          -200        -300
@@ -144,51 +152,88 @@ class Simulation:
         self.plot_results()
 
     def plot_results(self):
-        fig, axs = plt.subplots(3, 1, figsize=(14, 18), sharex=True)
+        time = np.arange(0, self.total_time, self.dt)
 
-        time = np.arange(0, self.total_time / self.dt) * self.dt
-
+        # Plot Position
+        fig1, ax1 = plt.subplots()
         for veh in self.vehicles:
             line_style = '--' if veh.lane == 1 else '-'
-            axs[0].plot(time, self.Veh_Pos_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
-            axs[0].set_ylabel('Position (m)')
-            axs[0].set_title('Vehicle Positions Over Time')
-            axs[0].legend(loc='upper left')
-
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            axs[1].plot(time, self.Veh_Vel_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
-            axs[1].set_ylabel('Velocity (m/s)')
-            axs[1].set_title('Vehicle Velocities Over Time')
-
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            axs[2].plot(time, self.Veh_Acc_plot[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
-            axs[2].set_ylabel('Acceleration (m/s²)')
-            axs[2].set_title('Vehicle Accelerations Over Time')
-
-        axs[2].set_xlabel('Time (s)')
-    
+            ax1.plot(time, self.Veh_Pos_plot[veh.id],
+                     label=f'Vehicle {veh.id}', linestyle=line_style)
+        ax1.set_ylabel('Position (m)')
+        ax1.set_title('Vehicle Positions Over Time')
+        ax1.legend(loc='upper left')
+        ax1.set_xlabel('Time (s)')
         plt.tight_layout()
         plt.show()
 
+        # Plot Velocity
+        fig2, ax2 = plt.subplots()
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            ax2.plot(time, self.Veh_Vel_plot[veh.id],
+                     label=f'Vehicle {veh.id}', linestyle=line_style)
+        ax2.set_ylabel('Velocity (m/s)')
+        ax2.set_title('Vehicle Velocities Over Time')
+        ax2.legend(loc='upper left')
+        ax2.set_xlabel('Time (s)')
+        plt.tight_layout()
+        plt.show()
+
+        # Plot Acceleration
+        fig3, ax3 = plt.subplots()
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            ax3.plot(time, self.Veh_Acc_plot[veh.id],
+                     label=f'Vehicle {veh.id}', linestyle=line_style)
+        ax3.set_ylabel('Acceleration (m/s²)')
+        ax3.set_title('Vehicle Accelerations Over Time')
+        ax3.legend(loc='upper left')
+        ax3.set_xlabel('Time (s)')
+        plt.tight_layout()
+        plt.show()
+
+        # Plot VL ID
+        fig4, ax4 = plt.subplots()
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            ax4.plot(time, self.Veh_vl_id_plot[veh.id],
+                     label=f'Vehicle {veh.id}', linestyle=line_style)
+        ax4.set_ylabel('Virtual Leader ID')
+        ax4.set_title('Vehicle Virtual Leader IDs Over Time')
+        ax4.legend(loc='upper left')
+        ax4.set_xlabel('Time (s)')
+        plt.tight_layout()
+        plt.show()
+
+        # Plot VF ID
+        fig5, ax5 = plt.subplots()
+        for veh in self.vehicles:
+            line_style = '--' if veh.lane == 1 else '-'
+            ax5.plot(time, self.Veh_vf_id_plot[veh.id],
+                     label=f'Vehicle {veh.id}', linestyle=line_style)
+        ax5.set_ylabel('Virtual Follower ID')
+        ax5.set_title('Vehicle Virtual Follower IDs Over Time')
+        ax5.legend(loc='upper left')
+        ax5.set_xlabel('Time (s)')
+        plt.tight_layout()
+        plt.show()
 
 
 if __name__ == '__main__':
 
     vehicles = [
         Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
-        Vehicle(id=2, lane=0, init_Vel=28, init_Pos=-300),
-        Vehicle(id=3, lane=0, init_Vel=27, init_Pos=-350),
-        Vehicle(id=4, lane=0, init_Vel=26, init_Pos=-400),
+        Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-320),
+        Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-400),
         Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-400),
-        Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-500),
-        Vehicle(id=-3, lane=1, init_Vel=30, init_Pos=-560)
+        Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-500)
     ]
 
-    sim = Simulation(vehicles, 60, 0.1)
+    sim = Simulation(vehicles, 1, 0.1)
     if sim.check == 1:
         sim.mergeSimulator()
-        print(f"Position Plot: {sim.Veh_Pos_plot}")
-        print(f"Velocity Plot: {sim.Veh_Vel_plot}")
-        print(f"Acc Plot: {sim.Veh_Acc_plot}")
+        # print(f"Position Plot: {sim.Veh_Pos_plot}")
+        # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
+        # print(f"Acc Plot: {sim.Veh_Acc_plot}")
+        # print(f"vl_id Plot: {sim.Veh_vl_id_plot}")

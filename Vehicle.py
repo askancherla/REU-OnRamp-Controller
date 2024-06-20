@@ -70,7 +70,7 @@ class Vehicle():
         self.Acc = max(min(
             self.maxAcc*(1-((self.Vel)/(self.desired_ffVel))**alpha), self.maxAcc), self.minAcc)
         # print(f"CAV{self.id}'s vel is {self.Vel} from MDM")
-        print(f"CAV{self.id}'s acc is {self.Acc} from MDM")
+        # print(f"CAV{self.id}'s acc is {self.Acc} from MDM")
 
     #####################################################################################
     # Acc of each vehicle if it has a vehicle to follow.
@@ -91,6 +91,7 @@ class Vehicle():
         v0 = self.desired_ffVel      # desired speed in free-flow traffic conditions
 
         if self.lane == 0:
+            index_mainVeh = -1  # Initialize to an invalid index
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
             for index, mainVeh in enumerate(self.mainVeh_list):
                 if mainVeh[0] == self.id:
@@ -106,9 +107,10 @@ class Vehicle():
                                (s_star / s)), self.maxAcc), self.minAcc)
 
                 # print(f"CAV{self.id}'s vel is {self.Vel} from IDM")
-                print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
+                # print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
 
         else:
+            index_mergeVeh = -1  # Initialize to an invalid index
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
             for index, mergeVeh in enumerate(self.mergeVeh_list):
                 if mergeVeh[0] == self.id:
@@ -124,7 +126,7 @@ class Vehicle():
                                         delta - (s_star / s)), self.maxAcc), self.minAcc)
 
                 # print(f"CAV{self.id}'s vel is {self.Vel} from IDM")
-                print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
+                # print(f"CAV{self.id}'s acc is {self.Acc} from IDM")
 
     ###########################################################
     # Acc of each vehicle if it is in the merging section.
@@ -151,7 +153,7 @@ class Vehicle():
             self.Acc = max(min(k * (v_ref - self.Vel),
                            self.maxAcc), self.minAcc)
             # print(f"CAV{self.id}'s vel is {self.Vel} from speed coordination")
-            print(f"CAV{self.id}'s acc is {self.Acc} from speed coordination")
+            # print(f"CAV{self.id}'s acc is {self.Acc} from speed coordination")
 
     # Gap alignment (finding VL and VF)
     # This function should be run only on the ramp vehicles!!!
@@ -166,21 +168,28 @@ class Vehicle():
                 main_pos_id_list.append(
                     (self.mainVeh_list[i][4], self.mainVeh_list[i][0]))  # (pos, id)
 
+            print(f"main_pos_id_list: {main_pos_id_list}")
+
             # main_pos_id_list should be sorted based on the position (large to small)
             # if the self vehicle is behind the last mainlane vehicle
             if self.Pos <= main_pos_id_list[len(main_pos_id_list)-1][0]:
                 self.vl_id = main_pos_id_list[len(main_pos_id_list)-1][1]
+                self.vf_id = 0
+                print(f"CAV ID: {self.id}, VL: {self.vl_id}")
             # if the self vehicle is ahead of the first mainlane vehicle
             elif self.Pos > main_pos_id_list[0][0]:
                 self.vf_id = main_pos_id_list[0][1]
+                self.vl_id = 0
             else:
                 for i in range(len(main_pos_id_list)-1):
-                    if main_pos_id_list[i][0] >= self.Pos > main_pos_id_list[i+1][0]:
+                    if ((main_pos_id_list[i][0] >= self.Pos) and (self.Pos > main_pos_id_list[i+1][0])):
                         self.vl_id = main_pos_id_list[i][1]
                         self.vf_id = main_pos_id_list[i+1][1]
-                    else:
-                        print(
-                            f"Cannot find the VL or VF for merge CAV {self.id}")
+                        break
+
+                else:
+                    print(
+                        f"Cannot find the VL or VF for merge CAV {self.id} at {self.Pos} compared with {main_pos_id_list[len(main_pos_id_list)-1][0]} and {main_pos_id_list[0][0]}")
 
     # Virtual platoon control (Equation 4)
     # all CAV should share its info about VL and VF before running this function
@@ -194,7 +203,7 @@ class Vehicle():
             # if the self merge CAV has its physical preceding CAV, and its vl_id is same as the preceding
             # its vl should be its physical preceding CAV
             # otherwise it should keep its vl_id
-            for i in range(len(self.mergeVeh_list)):
+            for i in reversed(range(len(self.mergeVeh_list))):
                 if ((self.id == self.mergeVeh_list[i][0]) and (i != 0)):
                     if self.vl_id == self.mergeVeh_list[i-1][5]:
                         self.vl_id = self.mergeVeh_list[i-1][0]
@@ -206,6 +215,8 @@ class Vehicle():
             for i in self.mergeVeh_list:
                 if i[6] == self.id:
                     self.vl_id = i[0]
+                else:
+                    self.vl_id = self.id - 1   # mainlane vehicle should follow its physical preceding
 
         # refer the paper [Modeling cooperative and autonomous adaptive cruise control dynamic responses using experimental data]
         kp = 0.45
@@ -215,15 +226,15 @@ class Vehicle():
         if self.vl_id != 0:
             # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
             for index, Veh in enumerate(self.vehiclesInfo):
-                if self.vl_id == Veh[5]:
+                if self.vl_id == Veh[0]:
                     self.vp_Vel = self.Vel + kp*(self.Pos - self.vehiclesInfo[index][4]-hd*self.Vel) + kd*(
                         self.Vel-self.vehiclesInfo[index][3]-hd*self.Acc)
                     self.Acc = max(min((self.vp_Vel-self.Vel)/dt,
                                        self.maxAcc), self.minAcc)
-                    print(
-                        f"CAV{self.id}'s vel is {self.Vel} from virtual platoon control")
-                    print(
-                        f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
+                    # print(
+                    #     f"CAV{self.id}'s vel is {self.Vel} from virtual platoon control")
+                    # print(
+                    #     f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
 
     # Function to update position and speed
 
