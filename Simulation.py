@@ -14,8 +14,9 @@ class Simulation:
         self.maxVel = 30   # m/s= 108km/h ~= 67 mph
         self.minAcc = -4   # m/s^2
         self.maxAcc = 2    # m/s^2
-        self.mainVeh_list = []    # store all mainlane CAV objects
-        self.mergeVeh_list = []   # store all merge CAV objects
+        self.mainVeh_list = []    # store all mainlane CAV objects sorted based on position from largest to smallest
+        self.mergeVeh_list = []   # store all merge CAV objects sort from largest to smallest position
+        self.allVeh_list=[]      #store all CAV objects sorted by position smallest to largest
         self.veh_transmitInfo_list = []  # store the info from all CAVs broadcast
 
         # [[id=1, Vel=20, Pos = -300,..],
@@ -121,14 +122,33 @@ class Simulation:
                 veh_transmitInfo = veh.transmitInfo()
                 self.veh_transmitInfo_list.append(veh_transmitInfo)
 
-            """2. Each CAV receives info, and updates its Acc based on manualDriverModel and IDM"""
+            """2. 3 sorted list of vehicles"""
+            self.mainVeh_list =[]
+            self.mergeVeh_list = []
+            self.allVeh_list = []
             for veh in self.vehicles:
+                self.allVeh_list.append(veh)
+                if veh.lane == 0:            # 0: mainlane
+                    self.mainVeh_list.append(veh)
+                elif veh.lane == 1:          # 1: mergelane
+                    self.mergeVeh_list.append(veh)
+                else:
+                    print("Error in the lane ID, neither 0 or 1")
+                    return 0
+        # sorted the vehicles by their position (from large to small value)
+        # 'x' is a temporate variable which refers to the element of the list
+            self.mainVeh_list.sort(key=lambda x: x.Pos, reverse=True)
+            self.mergeVeh_list.sort(key=lambda x: x.Pos, reverse=True)
+            self.allVeh_list.sort(key=lambda x: x.Pos, reverse=True)
+
+            """3. Each CAV receives info, and updates its Acc based on manualDriverModel and IDM"""
+            for veh in self.allVeh_list:
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 veh.manualDriverModel()   # Acc updates for each CAV based on manualDriverModel
                 veh.intelligent_driver_model()  # Acc updates for each CAV based on IDM
 
             """3. Each CAV updates its acc if it is in the merging area"""
-            for veh in self.vehicles:
+            for veh in self.allVeh_list:
                 ########################################################
                 # Add bias to self.veh_transmitInfo_list to
                 # implement the attacks during speed coordination!!!!!
@@ -139,7 +159,7 @@ class Simulation:
 
             """4. Each CAV shares its info to others (especially updated vl_id and vf_id)"""
             self.veh_transmitInfo_list = []  # empty the self.veh_transmitInfo_list
-            for veh in self.vehicles:
+            for veh in self.allVeh_list:
                 # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
                 veh_transmitInfo = veh.transmitInfo()
                 self.veh_transmitInfo_list.append(veh_transmitInfo)
@@ -148,7 +168,7 @@ class Simulation:
             #     f"Info list before virtual platooning at time step {t}, {self.veh_transmitInfo_list}")
 
             """5. Each CAV updates its acc based on virtual platooning"""
-            for veh in self.vehicles:
+            for veh in self.mainVeh_list:
                 ########################################################
                 # Add bias to self.veh_transmitInfo_list to
                 # implement the attacks during virtual platonning!!!!!
@@ -156,6 +176,17 @@ class Simulation:
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 # Acc update based on virtual platoon control
                 veh.virtual_platoon_control(self.dt)
+
+            for veh in reversed(self.mergeVeh_list):
+                ########################################################
+                # Add bias to self.veh_transmitInfo_list to
+                # implement the attacks during virtual platonning!!!!!
+                ########################################################
+                veh.receiveInfo(self.veh_transmitInfo_list)
+                # Acc update based on virtual platoon control
+                veh.virtual_platoon_control(self.dt)
+
+            for veh in self.allVeh_list:
                 # update states for current time step
                 veh.updateStatus(self.dt)
                 # # Mutation attack (make sure this makes sense)

@@ -15,8 +15,8 @@ class Vehicle():
         self.prev_Vel = 0
         # each CAV needs to receive other CAVs info through perception channel, which is implemented through a list of tuples
         self.vehiclesInfo = []
-        self.mainVeh_list = []   # store the info of other mainlane CAVs if self is on mainlane
-        self.mergeVeh_list = []  # store the info of other mergelane CAVs if self is on mergelane
+        self.mainVehInfo_list = []   # store the info of other mainlane CAVs if self is on mainlane
+        self.mergeVehInfo_list = []  # store the info of other mergelane CAVs if self is on mergelane
 
         # Constant Vehicle properties
         self.length = 4.5  # meters, length of the vehicle
@@ -40,19 +40,19 @@ class Vehicle():
         # the Simulator will provide "vehinfoV2X". It could be benign or mutated
         self.vehiclesInfo = vehinfoV2X
         # filter out all CAVs based on their lane, and sorted based on Pos (from large to small value)
-        self.mainVeh_list = []   # initialize to empty every time receive the info
-        self.mergeVeh_list = []  # initialize to empty every time receive the info
+        self.mainVehInfo_list = []   # initialize to empty every time receive the info
+        self.mergeVehInfo_list = []  # initialize to empty every time receive the info
 
         for i in range(len(self.vehiclesInfo)):
             if self.vehiclesInfo[i][1] == 0:     # CAV.lane == 0
-                self.mainVeh_list.append(self.vehiclesInfo[i])
+                self.mainVehInfo_list.append(self.vehiclesInfo[i])
             else:                                # CAV.lane == 1
-                self.mergeVeh_list.append(self.vehiclesInfo[i])
+                self.mergeVehInfo_list.append(self.vehiclesInfo[i])
 
         # sort each list based on their positions (large to small)
         # based on the order of sublist, x[4] should be Pos
-        self.mainVeh_list.sort(key=lambda x: x[4], reverse=True)
-        self.mergeVeh_list.sort(key=lambda x: x[4], reverse=True)
+        self.mainVehInfo_list.sort(key=lambda x: x[4], reverse=True)
+        self.mergeVehInfo_list.sort(key=lambda x: x[4], reverse=True)
 
     def transmitInfo(self):
         # transmit the info of the self vehicle as a list
@@ -67,8 +67,8 @@ class Vehicle():
     def manualDriverModel(self):
         alpha = 3  # sensitivity exponent
 
-        self.Acc = max(min(
-            self.maxAcc*(1-((self.Vel)/(self.desired_ffVel))**alpha), self.maxAcc), self.minAcc)
+        self.Acc = self.maxAcc*(1-((self.Vel)/(self.desired_ffVel))**alpha)
+        self.Acc = max(min(self.Acc, self.maxAcc), self.minAcc)
         # print(f"CAV{self.id}'s vel is {self.Vel} from MDM")
         # print(f"CAV{self.id}'s acc is {self.Acc} from MDM")
 
@@ -93,15 +93,15 @@ class Vehicle():
         if self.lane == 0:
             index_mainVeh = -1  # Initialize to an invalid index
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
-            for index, mainVeh in enumerate(self.mainVeh_list):
+            for index, mainVeh in enumerate(self.mainVehInfo_list):
                 if mainVeh[0] == self.id:
-                    index_mainVeh = index    # return the index of self vehicle in the mainVeh_list
+                    index_mainVeh = index    # return the index of self vehicle in the mainVehInfo_list
 
-            if index_mainVeh != 0:    # since the self.mainVeh_list is sorted already, if self is not the 1st element in the list, it should have a physical preceding CAV
-                delta_v = self.Vel - self.mainVeh_list[index_mainVeh-1][3]
+            if index_mainVeh != 0:    # since the self.mainVehInfo_list is sorted already, if self is not the 1st element in the list, it should have a physical preceding CAV
+                delta_v = self.Vel - self.mainVehInfo_list[index_mainVeh-1][3]
                 s_star = s0 + max(0, self.Vel * T +
                                   (self.Vel * delta_v) / (2 * np.sqrt(a * b)))
-                s = self.mainVeh_list[index_mainVeh -
+                s = self.mainVehInfo_list[index_mainVeh -
                                       1][4] - self.length - self.Pos
                 self.Acc = max(min(a * (1 - (self.Vel / v0) ** delta -
                                (s_star / s)), self.maxAcc), self.minAcc)
@@ -112,15 +112,15 @@ class Vehicle():
         else:
             index_mergeVeh = -1  # Initialize to an invalid index
             # (id, lane, Acc, Vel, Pos, vl_id, vf_id)
-            for index, mergeVeh in enumerate(self.mergeVeh_list):
+            for index, mergeVeh in enumerate(self.mergeVehInfo_list):
                 if mergeVeh[0] == self.id:
-                    index_mergeVeh = index    # return the index of self vehicle in the mergeVeh_list
+                    index_mergeVeh = index    # return the index of self vehicle in the mergeVehInfo_list
 
             if index_mergeVeh != 0:
-                delta_v = self.Vel - self.mergeVeh_list[index_mergeVeh-1][3]
+                delta_v = self.Vel - self.mergeVehInfo_list[index_mergeVeh-1][3]
                 s_star = s0 + max(0, self.Vel * T +
                                   (self.Vel * delta_v) / (2 * np.sqrt(a * b)))
-                s = self.mergeVeh_list[index_mergeVeh -
+                s = self.mergeVehInfo_list[index_mergeVeh -
                                        1][4] - self.length - self.Pos
                 self.Acc = max(min(a * (1 - (self.Vel / v0) **
                                         delta - (s_star / s)), self.maxAcc), self.minAcc)
@@ -145,8 +145,8 @@ class Vehicle():
 
         if self.lane == 1:  # only mergelane CAV should do speed coordination
             # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
-            for i in range(len(self.mainVeh_list)):
-                main_vel_list.append(self.mainVeh_list[i][3])
+            for i in range(len(self.mainVehInfo_list)):
+                main_vel_list.append(self.mainVehInfo_list[i][3])
 
             # calculate the average speed based on subsection "2) Speed coordination" in the paper
             v_ref = sum(main_vel_list)/len(main_vel_list)
@@ -164,9 +164,9 @@ class Vehicle():
 
         if self.lane == 1:  # only mergelane CAV should do gap alignment
             # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
-            for i in range(len(self.mainVeh_list)):
+            for i in range(len(self.mainVehInfo_list)):
                 main_pos_id_list.append(
-                    (self.mainVeh_list[i][4], self.mainVeh_list[i][0]))  # (pos, id)
+                    (self.mainVehInfo_list[i][4], self.mainVehInfo_list[i][0]))  # (pos, id)
 
             print(f"main_pos_id_list: {main_pos_id_list}")
 
@@ -186,7 +186,7 @@ class Vehicle():
                         self.vl_id = main_pos_id_list[i][1]
                         self.vf_id = main_pos_id_list[i+1][1]
 
-                else:
+                if self.vl_id == 0 and self.vf_id == 0:
                     print(
                         f"Cannot find the VL or VF for merge CAV {self.id} at {self.Pos} compared with {main_pos_id_list[len(main_pos_id_list)-1][0]} and {main_pos_id_list[0][0]}")
 
@@ -202,20 +202,30 @@ class Vehicle():
             # if the self merge CAV has its physical preceding CAV, and its vl_id is same as the preceding
             # its vl should be its physical preceding CAV
             # otherwise it should keep its vl_id
-            for i in reversed(range(len(self.mergeVeh_list))):
-                if ((self.id == self.mergeVeh_list[i][0]) and (i != 0)):
-                    if self.vl_id == self.mergeVeh_list[i-1][5]:
-                        self.vl_id = self.mergeVeh_list[i-1][0]
+            for i in range(len(self.mergeVehInfo_list)): ##-2 leader becomes -1 @ t=0
+                if ((self.id == self.mergeVehInfo_list[i][0]) and (i != 0)):
+                    if self.vl_id == self.mergeVehInfo_list[i-1][5]:
+                        self.vl_id = self.mergeVehInfo_list[i-1][0]
+            # print(self.vehiclesInfo)
 
         else:
             # if self is in mainlane, if will read the vf_id of all merge CAVs,
             # if one/multi merge CAV's vf_id matches, self will follow the last one
             # otherwise self.Acc will keep from the manualmodel or IDM
-            for i in self.mergeVeh_list:
-                if i[6] == self.id:
-                    self.vl_id = i[0]
+            count = 0
+            for i in self.mergeVehInfo_list:
+                if self.id != i[6]:
+                    continue
                 else:
-                    self.vl_id = self.id - 1   # mainlane vehicle should follow its physical preceding
+                    self.vl_id = i[0]
+                    count += 1
+            
+            if (count == 0) and (self.id == self.mainVehInfo_list[0][0]):
+                self.vl_id = 0
+            elif (count == 0) and (self.id != self.mainVehInfo_list[0][0]):
+                self.vl_id = self.id -1
+            else:
+                pass
 
         # refer the paper [Modeling cooperative and autonomous adaptive cruise control dynamic responses using experimental data]
         kp = 0.45
