@@ -185,7 +185,6 @@ class Vehicle():
                     if ((main_pos_id_list[i][0] >= self.Pos) and (self.Pos > main_pos_id_list[i+1][0])):
                         self.vl_id = main_pos_id_list[i][1]
                         self.vf_id = main_pos_id_list[i+1][1]
-                        break
 
                 else:
                     print(

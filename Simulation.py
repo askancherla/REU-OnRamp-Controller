@@ -1,5 +1,4 @@
 from Vehicle import Vehicle   # import the Vehicle class from Vehicle.py
-from AttackGeneratorModule import mutationAttackBias
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -85,33 +84,32 @@ class Simulation:
                 return 0
 
         return 1
-    
-    ##################################################
-    # Apply mutation attack function
-    ##################################################
-    def apply_mutation_attack(self, time_step):
-        attackVictim = [1, 3]  # Example victims
-        attackDuration = [[[10, 20]], [[15, 25]]]  # Example durations as lists of lists
-        attackChannel = ['Pos', 'Vel']  # Example channels (Position, Velocity)
-        freqType = ['Continuous', 'Cluster']  # Example frequency types
-        freqValue = [[0], [2, 3]]  # Example frequency values
-        biasType = ['Constant', 'Linear']  # Example bias types
-        biasValue = [[5], [2, 3]]  # Example bias values
 
-        time_steps = np.arange(0, self.total_time, self.dt / 10)
-        bias_df = mutationAttackBias(time_steps, attackVictim, attackDuration, attackChannel, freqType, freqValue, biasType, biasValue)
+    # ##################################################
+    # # Apply mutation attack function
+    # ##################################################
+    # def apply_mutation_attack(self, time_step):
+    #     attackVictim = [1, 3]  # Example victims
+    #     attackDuration = [[[10, 20]], [[15, 25]]]  # Example durations as lists of lists
+    #     attackChannel = ['Pos', 'Vel']  # Example channels (Position, Velocity)
+    #     freqType = ['Continuous', 'Cluster']  # Example frequency types
+    #     freqValue = [[0], [2, 3]]  # Example frequency values
+    #     biasType = ['Constant', 'Linear']  # Example bias types
+    #     biasValue = [[5], [2, 3]]  # Example bias values
 
-        for veh in self.vehicles:
-            if veh.id in attackVictim and time_step in bias_df.index:
-                bias = bias_df.at[time_step, veh.id]
-                veh.Vel += bias  # Apply bias to velocity or any other attribute
-                veh.Acc += bias  # Apply bias to acceleration or any other attribute
+    #     time_steps = np.arange(0, self.total_time, self.dt / 10)
+    #     bias_df = mutationAttackBias(time_steps, attackVictim, attackDuration, attackChannel, freqType, freqValue, biasType, biasValue)
 
-
+    #     for veh in self.vehicles:
+    #         if veh.id in attackVictim and time_step in bias_df.index:
+    #             bias = bias_df.at[time_step, veh.id]
+    #             veh.Vel += bias  # Apply bias to velocity or any other attribute
+    #             veh.Acc += bias  # Apply bias to acceleration or any other attribute
 
     ##################################################
     # Run the Simulator for on-ramp merging scenario
     ##################################################
+
     def mergeSimulator(self):
 
         for t in np.arange(0, self.total_time, self.dt):
@@ -160,8 +158,8 @@ class Simulation:
                 veh.virtual_platoon_control(self.dt)
                 # update states for current time step
                 veh.updateStatus(self.dt)
-                # Mutation attack (make sure this makes sense)
-                self.apply_mutation_attack(t)
+                # # Mutation attack (make sure this makes sense)
+                # self.apply_mutation_attack(t)
                 # store the update states to the dataframe for plotting
                 self.Veh_Pos_plot.loc[t, veh.id] = veh.Pos
                 self.Veh_Vel_plot.loc[t, veh.id] = veh.Vel
