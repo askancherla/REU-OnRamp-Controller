@@ -1,34 +1,28 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-# # List of dictionaries
-# list_of_dicts = [
-#     {'name': 'John', 'age': -28},
-#     {'name': 'Jane', 'age': -23},
-#     {'name': 'Doe', 'age': -32},
-#     {'name': 'Emily', 'age': -25}
-# ]
-
-# # Sort by the 'age' key
-# sorted_list = sorted(list_of_dicts, key=lambda x: x['age'], reverse=True)
-
-# print(sorted_list)
-
-# for i in reversed(range(5)):
-#     print(f"Number: {i}")
-
-# total_time = 10
-# dt = 0.1
-# for t in np.arange(0, total_time, dt):
-#     print(t)
-
-# Veh_Pos_plot = pd.DataFrame(0, index=range(
-#     int(total_time / dt)), columns=["a", "b"])
-# print(Veh_Pos_plot)
+import itertools
+from Vehicle import Vehicle
 
 
-my_tuple_list = [(-240, 1), (-300, 2), (-350, 3)]
-a = my_tuple_list[0][0]
-b = my_tuple_list[1][1]
-print(f"a: {a}, b: {b}, len: {len(my_tuple_list)-1}")
+# A = [[1], [2], [3]]
+# B = [['Pos'], ['Vel'], ['Pos', 'Vel']]
+# C = [[[0]], [[1]], [[2]]]
+
+# combinations = [list(combo) for combo in itertools.product(A, B, C)]
+
+# # Print each combination
+# for combo in combinations:
+#     print(f"Combination is: {combo}")
+
+
+vehicles = [
+    Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
+    Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-320),
+    Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-400),
+    Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-400),
+    Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-500)
+]
+
+columns = [veh.id for veh in vehicles]
+print(f"All veh ids: {columns}")

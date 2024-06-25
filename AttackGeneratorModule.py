@@ -2,6 +2,7 @@ from Vehicle import Vehicle   # import the Vehicle class from Vehicle.py
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 
 ########################################################################################################################################
@@ -9,8 +10,8 @@ import matplotlib.pyplot as plt
 # Here we build 2D Falsify Information Vector for attack channel since the number of channel type is limited compared to the other two
 ########################################################################################################################################
 class CyberAttacker():
-    def __init__(self) -> None:
-        pass
+    def __init__(self, vehicles):
+        self.vehicles = vehicles
 
     def mutAttackFalsifyInfoVectorCal(self, attackStartTime, t, mutFreqType, mutFreqParaValue, mutBiasType, mutBiasParaValue, currVic, currDura, currChan):
         FIV_value = 0  # initialize the returned bias value
@@ -76,21 +77,21 @@ class CyberAttacker():
 
         return FIV_value
 
-    def mutAttackFalsifyInfoVectorGen(self, vehicles, attackCase, attackStartTime, attackEndTime, controlTimeInterval):
+    def mutAttackFalsifyInfoVectorGen(self, attackCase, attackStartTime, attackEndTime, controlTimeInterval):
 
         ####################################
         # 1. Extract All Attack Parameters
         ####################################
 
-        # attackCase = [attackVictim, attackDuration, attackChannel, freqType, freqValue, biasType, biasValue]
+        # attackCase = [attackVictim, attackDuration, attackChannel, freqType, freqParaValue, biasType, biasParaValue]
         # One example:
         # attackVictim:   [                            1                ,             3            ]
         # attackDuration: [  [         [10, 20]        , [   15,25  ]]  , [        [20, 30]      ] ]  # make sure all of them should between 'attackStartTime' and 'attackEndTime'
         # attackChannel:  [  [[   'Pos'   ,   'Vel'  ] , [   'Pos'  ]]  , [  [      'Vel'      ] ] ]
         # freqType:       [  [['Continuous, 'Cluster'] , [ 'Cluster']]  , [  [  'Continuous'   ] ] ]
-        # freqValue:      [  [[    [0]    ,   [2,3]  ] , [   [5,2]  ]]  , [  [       [0]       ] ] ]
+        # freqParaValue:  [  [[    [0]    ,   [2,3]  ] , [   [5,2]  ]]  , [  [       [0]       ] ] ]
         # biasType:       [  [[ 'Linear'  ,'Constant'] , ['Constant']]  , [  [  'Sinusoidal'   ] ] ]
-        # biasValue:      [  [[   [2,3]   ,    [4]   ] , [    [6]   ]]  , [  [ [10, 0.5, 0, 5] ] ] ]
+        # biasParaValue:  [  [[   [2,3]   ,    [4]   ] , [    [6]   ]]  , [  [ [10, 0.5, 0, 5] ] ] ]
 
         attackVictim = attackCase[0]
         attackDuration = attackCase[1]
@@ -146,6 +147,118 @@ class CyberAttacker():
 
         return Pos_FIV_df, Vel_FIV_df
 
+    def mutAttackCaseGenerator_1Vic1Dura1Chan(self,
+                                              duration_startT,
+                                              duration_maxlength,
+                                              duration_interval,
+                                              allMaliChannelList,
+                                              allFreqTypeList,
+                                              freqValue,
+                                              allBiasTypeList,
+                                              allBiasParaValue
+                                              ):
+
+        # victim_num:         the number of victims
+        # duration_num:       the number of attackdurations, consider 1 only
+        # duration_startT:    start time of the attack duration, fixed
+        # duration_maxlength: the max length of duration
+        # duration_interval:  the increase interval of duration actual length
+        # allMaliChannelList: all channel types that are malicious
+        # allFreqTypeList:    all freq types we are going to implement (only consider 'Continuous' for now since the impact of continuous is likely more compared to Cluster)
+        # freqValue:          since we only consider 'Continuous' for now, it should be 0
+        # allBiasTypeList:    all bias types we are going to implement
+        # allBiasParaValue:   depend on the type of bias
+
+        victim_num = 1
+        duration_num = 1
+
+        attackCaseList = []
+
+        ####################################################################
+        # 1. Generate all possible "attackVictim" and store them as a list
+        ####################################################################
+
+        # a list which contains all vehicle IDs
+        allVehID = [veh.id for veh in self.vehicles]
+        # Generate all possible combinations for each specified victim vehicle number
+        # store all possible attackVictim list for different number of victims
+        victim_veh_tuple_all = []
+        for length in range(1, victim_num+1):
+            # generate all possible attackVictim list for all attackCases
+            victim_veh_tuple = itertools.combinations(allVehID, length)
+            victim_veh_tuple_all.extend(victim_veh_tuple)
+
+        # Convert the combinations from tuples to lists
+        attackVictimList = [list(combo)
+                            for combo in victim_veh_tuple_all]   # if victim_num=1, it should be [[1], [2], [3], [-1], [-2]]
+        # print(f"attackVictimList: {attackVictimList}")
+
+        #######################################################################
+        # 2. Generate all possible "attackDuration" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        attackDurationList = [[[[duration_startT, duration_startT + duration_interval * i]]]
+                              for i in range(int(duration_maxlength/duration_interval))]
+
+        # print(f"attackDurationList: {attackDurationList}")
+
+        #######################################################################
+        # 3. Generate all possible "attackChannel" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        attackChannelList = [[[['Pos']]], [[['Vel']]]]
+
+        #######################################################################
+        # 4. Generate all possible "freqType" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        freqTypeList = [[[['Continuous']]]]
+
+        #######################################################################
+        # 5. Generate all possible "freqParaValue" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        freqParaValueList = [[[[[0]]]]]
+
+        #######################################################################
+        # 6. Generate all possible "biasType" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        biasTypeList = [[[['Constant']]]]
+
+        #######################################################################
+        # 7. Generate all possible "biasParaValue" and store them as a list
+        #    Only consider 1 attackDuration for 1 victim for now
+        #######################################################################
+
+        # For 'Constant' bias type, allBiasParaValue should have 3 elements
+        # 1st element shows the Bias we want to add initially
+        # 2nd element shows the Bias we want to add at the end
+        # 3rd element shows the step we increase the Bias value
+
+        initialBias = allBiasParaValue[0]
+        endBias = allBiasParaValue[1]
+        increaseStep = allBiasParaValue[2]
+
+        biasParaValueList = [[[[[initialBias+increaseStep*i]]]]
+                             for i in range(int((endBias-initialBias)/increaseStep))]
+
+        # print(f"biasParaValueList: {biasParaValueList}")
+
+        #######################################################################
+        # Generate all possible attackCase based on the 7 lists above
+        #######################################################################
+
+        attackCaseList = [list(attackCase) for attackCase in itertools.product(attackVictimList, attackDurationList,
+                                                                               attackChannelList, freqTypeList, freqParaValueList, biasTypeList, biasParaValueList)]
+
+        return attackCaseList
+
 
 if __name__ == "__main__":
     vehicles = [
@@ -173,13 +286,28 @@ if __name__ == "__main__":
     # biasType = [["Linear"], ["Constant"]]
     # biasValue = [[2, 3], [5]]
 
-    attacker = CyberAttacker()
+    attacker = CyberAttacker(vehicles)
 
-    Pos_FIV_df, Vel_FIV_df = attacker.mutAttackFalsifyInfoVectorGen(
-        vehicles, attackCase, 0, 10, 0.1)
+    attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(duration_startT=10,
+                                                                    duration_maxlength=20,
+                                                                    duration_interval=10,
+                                                                    allMaliChannelList=[
+                                                                        'Pos', 'Vel'],
+                                                                    allFreqTypeList=[
+                                                                        'Continuous'],
+                                                                    freqValue=[
+                                                                        0],
+                                                                    allBiasTypeList=[
+                                                                        'Constant'],
+                                                                    allBiasParaValue=[1, 10, 1])
 
-    print(Pos_FIV_df)
-    print(Vel_FIV_df)
+    print(attackCaseList)
+
+    # Pos_FIV_df, Vel_FIV_df = attacker.mutAttackFalsifyInfoVectorGen(
+    #     attackCase, 0, 10, 0.1)
+
+    # print(Pos_FIV_df)
+    # print(Vel_FIV_df)
 
     def plot_results(df, channel):
         for column in df.columns:
@@ -196,8 +324,8 @@ if __name__ == "__main__":
         # Display the plot
         plt.show()
 
-    plot_results(Pos_FIV_df, 'Position')
-    plot_results(Vel_FIV_df, 'Velocity')
+    # plot_results(Pos_FIV_df, 'Position')
+    # plot_results(Vel_FIV_df, 'Velocity')
 
 
 # def mutationAttackBias(num_veh,
