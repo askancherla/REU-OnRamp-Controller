@@ -2,13 +2,17 @@
 
 ## Summary of the Python Program
 
-The provided Python program simulates the scenario of an on-ramp vehicle merging into mainline traffic using vehicle-to-vehicle (V2V) communication, as described in the research paper "Coordinated Merge Control Based on V2V Communication."
+The provided Python program simulates the scenario of on-ramp vehicles merging into mainline traffic using vehicle-to-vehicle (V2V) communication, as described in the research paper "Coordinated Merge Control Based on V2V Communication."
 
 ## Road Layout
 
   <img src="Merge Road Layout.PNG" alt="Merge Road Layout." style="zoom:100%;" />
 
-Merge vehicles should be merged in to the mainlane vehicles before the merge point (MP), which is (0,0). The length of the acceleration lane is 200 m based on the paper. We can initialize any number of mainlane and merge vehicles before the simulation as long as their relative time and space headway is larger than the safe values. We do not consider any lane change on the mainlane and mergelane, therefore we only have the rightmost lane in the mainlan traffic.
+Merge vehicles should be merged into the mainlane vehicles before the merge point (MP), which is (0,0). The position value of all vehicles at the left of MP are negative. The length of the acceleration lane is 200 m based on the paper. We can initialize any number of mainlane and merge vehicles at the left of acceleration lane before the simulation as long as their relative time and space headways are larger than the safety values. We do not consider any lane change on the mainlane and mergelane, therefore we only have the rightmost lane in the mainlane traffic.
+
+## How to run the program
+
+In "main.py", we can change the vehicle numbers on each lane initially, their ids (positive for mainlane CAVs, negative for mergelane CAVs), initial position and velocity values. We can also change the total simulation time and time step. Then, run "main.py".
 
 ## How the Code Relates to the Paper
 
@@ -18,29 +22,23 @@ The program starts by defining the initial positions and speeds of the vehicles 
 
 ### Speed Coordination
 
-The `speed_coordination` function implements Equation (2) from the paper. This equation adjusts the acceleration of the on-ramp vehicle to match the average speed of the mainline traffic. The gain `k` is a control parameter.
+The `speed_coordination` function in the Vehicle class implements Equation (2) from the paper. This equation adjusts the acceleration of the on-ramp vehicle to match the average speed of the mainline traffic. The gain `k` is a control parameter.
 
 ### Gap Alignment
 
-The `gap_alignment` function determines the positions of the virtual leader (VL) and virtual follower (VF) for the on-ramp vehicle. This is crucial for aligning the on-ramp vehicle with a gap in the mainline traffic.
+The `gap_alignment` function in the Vehicle class determines the virtual leader (VL) and virtual follower (VF) for the on-ramp vehicle. This is crucial for aligning the on-ramp vehicle with a gap in the mainline traffic.
 
 ### Virtual Platoon Control
 
-The `virtual_platoon_control` function implements Equation (4) from the paper. Here, `v_k` is the desired speed of the on-ramp vehicle, `k_p` and `k_d` are control gains, and `h_d` is the desired time gap. This function ensures that the on-ramp vehicle adjusts its speed to maintain a safe distance within the virtual platoon.
+The `virtual_platoon_control` function in the Vehicle class implements Equation (4) from the paper. This function ensures that the on-ramp vehicle adjusts its speed to maintain a safe distance within the virtual platoon.
 
-### Sensor Noise Model
+<!-- ### Sensor Noise Model
 
-The `sensor_noise` function implements the Gauss-Markov noise model from Equations (6), (7), and (8). This simulates GPS position measurement errors, which affect the accuracy of vehicle position data used in the V2V communication.
+The `sensor_noise` function implements the Gauss-Markov noise model from Equations (6), (7), and (8). This simulates GPS position measurement errors, which affect the accuracy of vehicle position data used in the V2V communication. -->
 
-### Simulation Loop
+### Simulation Class
 
-The main loop runs for a specified number of time steps, updating the positions and speeds of the vehicles at each step.
-
-- The on-ramp vehicle first adjusts its speed using the speed coordination function.
-- It then attempts to align with a gap in the mainline traffic using the gap alignment function.
-- If a suitable gap is found, the on-ramp vehicle adjusts its speed to merge smoothly using the virtual platoon control function.
-- The positions and speeds of the mainline vehicles are updated at each time step.
-- The program prints the positions and speeds of all vehicles at each time step for debugging purposes.
+The Simulation class runs for a specified number of time steps, updating the positions and speeds of the vehicles at each step.
 
 ## How It Relates to the Paper
 

@@ -9,37 +9,38 @@ class Simulation:
         self.vehicles = vehicles    # get all vehicles' initial status
         # initialize to store the transmitInfo from all CAVs
         self.min_gap = 2          # meter, same as the one in Vehicle Class
-        self.safe_time_headway = 1.5   # second, same as the one in Vehicle Class
+        self.safe_time_headway = 1.1   # second, same as the one in Vehicle Class
         self.minVel = 5    # m/s
         self.maxVel = 30   # m/s= 108km/h ~= 67 mph
         self.minAcc = -4   # m/s^2
         self.maxAcc = 2    # m/s^2
-        self.mainVeh_list = []    # store all mainlane CAV objects sorted based on position from largest to smallest
-        self.mergeVeh_list = []   # store all merge CAV objects sort from largest to smallest position
-        self.allVeh_list=[]      #store all CAV objects sorted by position smallest to largest
-        self.veh_transmitInfo_list = []  # store the info from all CAVs broadcast
+        self.allVeh_list = []  # store all CAV objects sorted by position smallest to largest
+        # store all mainlane CAV objects sorted based on position from largest to smallest
+        self.mainVeh_list = []
+        # store all merge CAV objects sort from largest to smallest position
+        self.mergeVeh_list = []
+        # store the info from all CAVs broadcast, e.g. [[id1, lane1, Acc1, Vel1, Pos1, vl_id1, vf_id1], ... , [idn, lanen, Accn, Veln, Posn, vl_idn, vf_idn]]
+        self.veh_transmitInfo_list = []
+        self.total_time = total_time
+        self.dt = time_interval
 
-        # [[id=1, Vel=20, Pos = -300,..],
-        #  [id=2, Vel=22, Pos = -400,..]
-        #  ...
-        #  [                           ]]
+        # for plotting (possibly because of precision and floating-point arithmetic in Python), we have to make sure the variables in the index are integers to make it work
+        self.total_time_plot = self.total_time * 10
+        self.dt_plot = self.dt*10
 
-        self.total_time = total_time*10
-        self.dt = time_interval*10
         self.Veh_Pos_plot = pd.DataFrame(0, index=range(
-            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])  # initialize a dataframe for ploting. rows: # of time step, column: # of CAVs
+            int(self.total_time_plot / self.dt_plot)), columns=[veh.id for veh in self.vehicles])  # initialize a dataframe for ploting. rows: # of time step, column: # of CAVs
         self.Veh_Vel_plot = pd.DataFrame(0, index=range(
-            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
+            int(self.total_time_plot / self.dt_plot)), columns=[veh.id for veh in self.vehicles])
         self.Veh_Acc_plot = pd.DataFrame(0, index=range(
-            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
+            int(self.total_time_plot / self.dt_plot)), columns=[veh.id for veh in self.vehicles])
+        self.Veh_vl_id_plot = pd.DataFrame(0, index=range(
+            int(self.total_time_plot / self.dt_plot)), columns=[veh.id for veh in self.vehicles])
+        self.Veh_vf_id_plot = pd.DataFrame(0, index=range(
+            int(self.total_time_plot / self.dt_plot)), columns=[veh.id for veh in self.vehicles])
+
         # 0 if there is something wrong in the initial settings, otherwise 1
         self.check = self.mergeInitialCheck()
-
-        # for debugging purpose
-        self.Veh_vl_id_plot = pd.DataFrame(0, index=range(
-            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
-        self.Veh_vf_id_plot = pd.DataFrame(0, index=range(
-            int(self.total_time / self.dt)), columns=[veh.id for veh in self.vehicles])
 
     ##################################################
     # Check the initial settings of all CAVs object
@@ -86,34 +87,14 @@ class Simulation:
 
         return 1
 
-    # ##################################################
-    # # Apply mutation attack function
-    # ##################################################
-    # def apply_mutation_attack(self, time_step):
-    #     attackVictim = [1, 3]  # Example victims
-    #     attackDuration = [[[10, 20]], [[15, 25]]]  # Example durations as lists of lists
-    #     attackChannel = ['Pos', 'Vel']  # Example channels (Position, Velocity)
-    #     freqType = ['Continuous', 'Cluster']  # Example frequency types
-    #     freqValue = [[0], [2, 3]]  # Example frequency values
-    #     biasType = ['Constant', 'Linear']  # Example bias types
-    #     biasValue = [[5], [2, 3]]  # Example bias values
-
-    #     time_steps = np.arange(0, self.total_time, self.dt / 10)
-    #     bias_df = mutationAttackBias(time_steps, attackVictim, attackDuration, attackChannel, freqType, freqValue, biasType, biasValue)
-
-    #     for veh in self.vehicles:
-    #         if veh.id in attackVictim and time_step in bias_df.index:
-    #             bias = bias_df.at[time_step, veh.id]
-    #             veh.Vel += bias  # Apply bias to velocity or any other attribute
-    #             veh.Acc += bias  # Apply bias to acceleration or any other attribute
-
     ##################################################
     # Run the Simulator for on-ramp merging scenario
     ##################################################
 
     def mergeSimulator(self):
 
-        for t in np.arange(0, self.total_time, self.dt):
+        # 't' shows the index of the control time step
+        for t in np.arange(0, int(self.total_time_plot / self.dt_plot), 1):
             """1. Each CAV shares its info to others"""
             self.veh_transmitInfo_list = [
             ]   # empty the self.veh_transmitInfo_list before collecting information
@@ -122,8 +103,8 @@ class Simulation:
                 veh_transmitInfo = veh.transmitInfo()
                 self.veh_transmitInfo_list.append(veh_transmitInfo)
 
-            """2. 3 sorted list of vehicles"""
-            self.mainVeh_list =[]
+            """2. Sort the three lists of vehicles"""
+            self.mainVeh_list = []
             self.mergeVeh_list = []
             self.allVeh_list = []
             for veh in self.vehicles:
@@ -135,29 +116,29 @@ class Simulation:
                 else:
                     print("Error in the lane ID, neither 0 or 1")
                     return 0
-        # sorted the vehicles by their position (from large to small value)
-        # 'x' is a temporate variable which refers to the element of the list
+            # sorted the vehicles by their position (from large to small value)
+            # 'x' is a temporate variable which refers to the element of the list
             self.mainVeh_list.sort(key=lambda x: x.Pos, reverse=True)
             self.mergeVeh_list.sort(key=lambda x: x.Pos, reverse=True)
             self.allVeh_list.sort(key=lambda x: x.Pos, reverse=True)
 
-            """3. Each CAV receives info, and updates its Acc based on manualDriverModel and IDM"""
+            """3. Each CAV receives info, and updates its Acc based on manualDriverModel or IDM"""
             for veh in self.allVeh_list:
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 veh.manualDriverModel()   # Acc updates for each CAV based on manualDriverModel
                 veh.intelligent_driver_model()  # Acc updates for each CAV based on IDM
 
-            """3. Each CAV updates its acc if it is in the merging area"""
+            """4. Each CAV updates its acc if it is in the merging area"""
+            ########################################################
+            # Add bias to self.veh_transmitInfo_list to
+            # implement the attacks during speed coordination!!!!!
+            ########################################################
             for veh in self.allVeh_list:
-                ########################################################
-                # Add bias to self.veh_transmitInfo_list to
-                # implement the attacks during speed coordination!!!!!
-                ########################################################
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 veh.speed_coordination()   # merge CAV will updates its Acc Based on speed coordination
                 veh.gap_alignment()        # merge CAV will change its vl_id and vf_id
 
-            """4. Each CAV shares its info to others (especially updated vl_id and vf_id)"""
+            """5. Each CAV shares its info to others (especially updated vl_id and vf_id)"""
             self.veh_transmitInfo_list = []  # empty the self.veh_transmitInfo_list
             for veh in self.allVeh_list:
                 # [id, lane, Acc, Vel, Pos, vl_id, vf_id]
@@ -167,21 +148,18 @@ class Simulation:
             # print(
             #     f"Info list before virtual platooning at time step {t}, {self.veh_transmitInfo_list}")
 
-            """5. Each CAV updates its acc based on virtual platooning"""
+            """6. Each CAV updates its acc based on virtual platooning"""
+            ########################################################
+            # Add bias to self.veh_transmitInfo_list to
+            # implement the attacks during virtual platonning!!!!!
+            ########################################################
             for veh in self.mainVeh_list:
-                ########################################################
-                # Add bias to self.veh_transmitInfo_list to
-                # implement the attacks during virtual platonning!!!!!
-                ########################################################
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 # Acc update based on virtual platoon control
                 veh.virtual_platoon_control(self.dt)
 
+            # manually set the implementation with the reverse order
             for veh in reversed(self.mergeVeh_list):
-                ########################################################
-                # Add bias to self.veh_transmitInfo_list to
-                # implement the attacks during virtual platonning!!!!!
-                ########################################################
                 veh.receiveInfo(self.veh_transmitInfo_list)
                 # Acc update based on virtual platoon control
                 veh.virtual_platoon_control(self.dt)
@@ -189,8 +167,6 @@ class Simulation:
             for veh in self.allVeh_list:
                 # update states for current time step
                 veh.updateStatus(self.dt)
-                # # Mutation attack (make sure this makes sense)
-                # self.apply_mutation_attack(t)
                 # store the update states to the dataframe for plotting
                 self.Veh_Pos_plot.loc[t, veh.id] = veh.Pos
                 self.Veh_Vel_plot.loc[t, veh.id] = veh.Vel
@@ -207,7 +183,7 @@ class Simulation:
         self.plot_results()
 
     def plot_results(self):
-        time = np.arange(0, self.total_time, self.dt)
+        time = np.arange(0, int(self.total_time_plot / self.dt_plot), 1)
 
         # Plot Position
         fig1, ax1 = plt.subplots()
@@ -219,6 +195,13 @@ class Simulation:
         ax1.set_title('Vehicle Positions Over Time')
         ax1.legend(loc='upper left')
         ax1.set_xlabel('Time (s)')
+        # Add rectangular zone
+        ax1.axhspan(-200, 0, color='grey', alpha=0.3,
+                    label='Acceleration Zone')
+
+        # Add text label
+        ax1.text(100, -100, 'Acceleration Zone', fontsize=12, color='black',
+                 horizontalalignment='center', verticalalignment='center')
         plt.tight_layout()
         plt.show()
 
@@ -261,18 +244,18 @@ class Simulation:
         plt.tight_layout()
         plt.show()
 
-        # Plot VF ID
-        fig5, ax5 = plt.subplots()
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            ax5.plot(time, self.Veh_vf_id_plot[veh.id],
-                     label=f'Vehicle {veh.id}', linestyle=line_style)
-        ax5.set_ylabel('Virtual Follower ID')
-        ax5.set_title('Vehicle Virtual Follower IDs Over Time')
-        ax5.legend(loc='upper left')
-        ax5.set_xlabel('Time (s)')
-        plt.tight_layout()
-        plt.show()
+        # # Plot VF ID
+        # fig5, ax5 = plt.subplots()
+        # for veh in self.vehicles:
+        #     line_style = '--' if veh.lane == 1 else '-'
+        #     ax5.plot(time, self.Veh_vf_id_plot[veh.id],
+        #              label=f'Vehicle {veh.id}', linestyle=line_style)
+        # ax5.set_ylabel('Virtual Follower ID')
+        # ax5.set_title('Vehicle Virtual Follower IDs Over Time')
+        # ax5.legend(loc='upper left')
+        # ax5.set_xlabel('Time (s)')
+        # plt.tight_layout()
+        # plt.show()
 
 
 if __name__ == '__main__':
@@ -285,7 +268,7 @@ if __name__ == '__main__':
         Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-500)
     ]
 
-    sim = Simulation(vehicles, 1, 0.1)
+    sim = Simulation(vehicles, 20, 0.1)
     if sim.check == 1:
         sim.mergeSimulator()
         # print(f"Position Plot: {sim.Veh_Pos_plot}")
