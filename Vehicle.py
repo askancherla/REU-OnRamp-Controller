@@ -223,7 +223,7 @@ class Vehicle():
             # print(self.vehiclesInfo)
 
         else:
-            # if self is in mainlane, if will read the vf_id of all merge CAVs,
+            # if self is in mainlane, it will read the vf_id of all merge CAVs,
             # if one/multi merge CAV's vf_id matches, self will follow the last merge CAV
             # otherwise self will follow its preceding mainlane CAV if it has one
             count = 0
@@ -231,9 +231,9 @@ class Vehicle():
                 if self.id != i[6]:
                     continue
                 else:
-                    ##Changing vl_id to vf_id
-                    self.vf_id = i[0]
-                    count += 1      # if at least one merge CAV's vf_id = mainlane self id, count !=0
+                    # Changing vl_id to vf_id (don't think so)
+                    self.vl_id = i[0]
+                    count += 1      # if at least one merge CAV's vl_id = mainlane self id, count !=0
 
             # no merge CAV's vf_id == mainlane self.id and mainlane self.id is the first vehicle in the mainlane
             if (count == 0) and (self.id == self.mainVehInfo_list[0][0]):
@@ -253,8 +253,8 @@ class Vehicle():
             for index, Veh in enumerate(self.vehiclesInfo):
                 if self.vl_id == Veh[0]:
                     # vp_Vel is the desired speed. Since we update the speed at the end in updateStatus(), we use a different Identifier here
-                    self.vp_Vel = self.Vel + kp*(abs(self.Pos - self.vehiclesInfo[index][4])-hd*self.Vel) + kd*(
-                        self.Vel-self.vehiclesInfo[index][3]-hd*self.Acc)
+                    self.vp_Vel = self.Vel + kp*(self.vehiclesInfo[index][4]-self.Pos-hd*self.Vel) + kd*(
+                        self.vehiclesInfo[index][3]-self.Vel-hd*self.Acc)
                     self.Acc = (self.vp_Vel-self.Vel)/dt
                     self.Acc = max(min(self.Acc, self.maxAcc), self.minAcc)
 
@@ -262,9 +262,7 @@ class Vehicle():
                     #     f"CAV{self.id}'s vel is {self.Vel} from virtual platoon control")
                     # print(
                     #     f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
-                    ## Setting vf_id and vl_id to 0
-                    self.vf_id = 0
-                    self.vl_id = 0
+
     # Function to update position and speed
 
     def updateStatus(self, dt):

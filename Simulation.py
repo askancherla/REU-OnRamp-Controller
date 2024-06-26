@@ -1,4 +1,5 @@
 from Vehicle import Vehicle   # import the Vehicle class from Vehicle.py
+from AttackGeneratorModule import CyberAttacker
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -91,7 +92,7 @@ class Simulation:
     # Run the Simulator for on-ramp merging scenario
     ##################################################
 
-    def mergeSimulator(self):
+    def mergeSimulator(self, Pos_FIV_bias_df_list_speedCoop, Vel_FIV_bias_df_list_speedCoop, Pos_FIV_bias_df_list_VP, Vel_FIV_bias_df_list_VP):
 
         # 't' shows the index of the control time step
         for t in np.arange(0, int(self.total_time_plot / self.dt_plot), 1):
@@ -129,12 +130,36 @@ class Simulation:
                 veh.intelligent_driver_model()  # Acc updates for each CAV based on IDM
 
             """4. Each CAV updates its acc if it is in the merging area"""
-            ########################################################
+
+            ######################################################################
+            # Make a copy of self.veh_transmitInfo_list for each CAV (vehInfoV2V)
+            # If the CAV is victim, bias will be added to vehInfoV2V
             # Add bias to self.veh_transmitInfo_list to
             # implement the attacks during speed coordination!!!!!
-            ########################################################
+            ######################################################################
             for veh in self.allVeh_list:
-                veh.receiveInfo(self.veh_transmitInfo_list)
+                # make a copy of self.veh_transmitInfo_list, do not mutate self.veh_transmitInfo_list
+                vehInfoV2V = self.veh_transmitInfo_list
+                # print(
+                #     f"Original vehInfoV2V: {vehInfoV2V} at time step {t}")
+                for i in range(len(Pos_FIV_bias_df_list_speedCoop)):
+                    if veh.id == Pos_FIV_bias_df_list_speedCoop[i][0]:
+                        for j, col in enumerate(Pos_FIV_bias_df_list_speedCoop[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[4] += Pos_FIV_bias_df_list_speedCoop[i][1].loc[t, col]
+
+                for i in range(len(Vel_FIV_bias_df_list_speedCoop)):
+                    if veh.id == Vel_FIV_bias_df_list_speedCoop[i][0]:
+                        for j, col in enumerate(Vel_FIV_bias_df_list_speedCoop[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[3] += Vel_FIV_bias_df_list_speedCoop[i][1].loc[t, col]
+
+                # print(
+                #     f"Mutated vehInfoV2V: {vehInfoV2V} at time step {t}")
+
+                veh.receiveInfo(vehInfoV2V)
                 veh.speed_coordination()   # merge CAV will updates its Acc Based on speed coordination
                 veh.gap_alignment()        # merge CAV will change its vl_id and vf_id
 
@@ -154,13 +179,48 @@ class Simulation:
             # implement the attacks during virtual platonning!!!!!
             ########################################################
             for veh in self.mainVeh_list:
-                veh.receiveInfo(self.veh_transmitInfo_list)
+                # make a copy of self.veh_transmitInfo_list, do not mutate self.veh_transmitInfo_list
+                vehInfoV2V = self.veh_transmitInfo_list
+                # print(
+                #     f"Original vehInfoV2V: {vehInfoV2V} at time step {t}")
+                for i in range(len(Pos_FIV_bias_df_list_VP)):
+                    if veh.id == Pos_FIV_bias_df_list_VP[i][0]:
+                        for j, col in enumerate(Pos_FIV_bias_df_list_VP[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[4] += Pos_FIV_bias_df_list_VP[i][1].loc[t, col]
+
+                for i in range(len(Vel_FIV_bias_df_list_VP)):
+                    if veh.id == Vel_FIV_bias_df_list_VP[i][0]:
+                        for j, col in enumerate(Vel_FIV_bias_df_list_VP[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[3] += Vel_FIV_bias_df_list_VP[i][1].loc[t, col]
+                veh.receiveInfo(vehInfoV2V)
                 # Acc update based on virtual platoon control
                 veh.virtual_platoon_control(self.dt)
 
             # manually set the implementation with the reverse order
             for veh in reversed(self.mergeVeh_list):
-                veh.receiveInfo(self.veh_transmitInfo_list)
+                # make a copy of self.veh_transmitInfo_list, do not mutate self.veh_transmitInfo_list
+                vehInfoV2V = self.veh_transmitInfo_list
+                # print(
+                #     f"Original vehInfoV2V: {vehInfoV2V} at time step {t}")
+                for i in range(len(Pos_FIV_bias_df_list_VP)):
+                    if veh.id == Pos_FIV_bias_df_list_VP[i][0]:
+                        for j, col in enumerate(Pos_FIV_bias_df_list_VP[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[4] += Pos_FIV_bias_df_list_VP[i][1].loc[t, col]
+
+                for i in range(len(Vel_FIV_bias_df_list_VP)):
+                    if veh.id == Vel_FIV_bias_df_list_VP[i][0]:
+                        for j, col in enumerate(Vel_FIV_bias_df_list_VP[i][1].columns):
+                            for sublist in vehInfoV2V:
+                                if sublist[0] == col:
+                                    sublist[3] += Vel_FIV_bias_df_list_VP[i][1].loc[t, col]
+
+                veh.receiveInfo(vehInfoV2V)
                 # Acc update based on virtual platoon control
                 veh.virtual_platoon_control(self.dt)
 
@@ -180,9 +240,58 @@ class Simulation:
                 # ...                               -500
                 # step =  self.total_time/self.dt
 
-        self.plot_results()
+        # self.plot_results_integrate()
+        self.plot_results_separate()
 
-    def plot_results(self):
+    # def plot_results_integrate(self):
+    #     fig, axs = plt.subplots(4, 1, sharex=True)  # figsize=(14, 18)
+    #     time = np.arange(0, int(self.total_time_plot / self.dt_plot), 1)
+
+    #     # Plot Position
+    #     for veh in self.vehicles:
+    #         line_style = '--' if veh.lane == 1 else '-'
+    #         axs[0].plot(time, self.Veh_Pos_plot[veh.id],
+    #                     label=f'Vehicle {veh.id}', linestyle=line_style)
+    #     axs[0].set_ylabel('Position (m)')
+    #     axs[0].set_title('Vehicle Positions Over Time')
+    #     axs[0].legend(loc='upper left')
+    #     # Add rectangular zone
+    #     axs[0].axhspan(-200, 0, color='grey', alpha=0.3,
+    #                    label='Acceleration Zone')
+    #     # Add text label
+    #     axs[0].text(100, -100, 'Acceleration Zone', fontsize=12, color='black',
+    #                 horizontalalignment='center', verticalalignment='center')
+
+    #     # Plot Velocity
+    #     for veh in self.vehicles:
+    #         line_style = '--' if veh.lane == 1 else '-'
+    #         axs[1].plot(time, self.Veh_Vel_plot[veh.id],
+    #                     label=f'Vehicle {veh.id}', linestyle=line_style)
+    #     axs[1].set_ylabel('Velocity (m/s)')
+    #     axs[1].set_title('Vehicle Velocities Over Time')
+    #     axs[1].legend(loc='upper left')
+
+    #     # Plot Acceleration
+    #     for veh in self.vehicles:
+    #         line_style = '--' if veh.lane == 1 else '-'
+    #         axs[2].plot(time, self.Veh_Acc_plot[veh.id],
+    #                     label=f'Vehicle {veh.id}', linestyle=line_style)
+    #     axs[2].set_ylabel('Acceleration (m/s²)')
+    #     axs[2].set_title('Vehicle Accelerations Over Time')
+    #     axs[2].legend(loc='upper left')
+
+    #     # Plot VL ID
+    #     for veh in self.vehicles:
+    #         line_style = '--' if veh.lane == 1 else '-'
+    #         axs[3].plot(time, self.Veh_vl_id_plot[veh.id],
+    #                     label=f'Vehicle {veh.id}', linestyle=line_style)
+    #     axs[3].set_ylabel('Virtual Leader ID')
+    #     axs[3].set_title('Vehicle Virtual Leader IDs Over Time')
+    #     axs[3].legend(loc='upper left')
+    #     # plt.tight_layout()
+    #     plt.show()
+
+    def plot_results_separate(self):
         time = np.arange(0, int(self.total_time_plot / self.dt_plot), 1)
 
         # Plot Position
@@ -262,15 +371,65 @@ if __name__ == '__main__':
 
     vehicles = [
         Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
-        Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-320),
+        Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-370),
         Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-400),
-        Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-400),
-        Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-500)
+        Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-380),
+        Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-430)
     ]
 
-    sim = Simulation(vehicles, 20, 0.1)
+    simEndtime = 20
+    simTimestep = 0.1
+
+    sim = Simulation(vehicles, simEndtime, simTimestep)
     if sim.check == 1:
-        sim.mergeSimulator()
+
+        # if we don't want to implement attacks
+        Pos_FIV_df_list_empty = [[0, pd.DataFrame(0, index=range(int(simEndtime / simTimestep)), columns=[
+            veh.id for veh in vehicles])]]
+        Vel_FIV_df_list_empty = [[0, pd.DataFrame(0, index=range(int(simEndtime / simTimestep)), columns=[
+            veh.id for veh in vehicles])]]
+        # if we don't want to implement attacks, uncomment this part and comments the next part of attacks
+
+        # if we want to implement attacks
+        attacker = CyberAttacker(vehicles)
+        attackCase = [
+            [-1],   # attackedVictim
+            [[2]],  # maliChannelSource
+            [[[[10, 50]]]],  # attackDuration:
+            [[[['Pos']]]],  # attackChannel:
+            [[[['Continuous']]]],  # freqType:
+            [[[[[0]]]]],  # freqParaValue:
+            [[[['Constant']]]],  # biasType:
+            [[[[[-50]]]]]   # biasParaValue:
+        ]
+        Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
+            attackCase, 0, simEndtime, simTimestep)
+        # if we want to implement attacks, uncomment this part and comments the above part of no attack
+
+        def plot_results(FIV_df_list):
+            for i in range(len(FIV_df_list)):      # go through each victim
+                for column in FIV_df_list[i][1].columns:
+                    plt.plot(FIV_df_list[i][1].index,
+                             FIV_df_list[i][1][column], label=column)
+
+            # Adding labels and title
+            plt.xlabel('Control Time Step')
+            plt.ylabel('Bias Value')
+            plt.title(
+                f'Bias Value of Vel Channel on Victim {FIV_df_list[i][0]}')
+
+            # Adding a legend
+            plt.legend()
+
+            # Display the plot
+            plt.show()
+
+        plot_results(Pos_FIV_df_list)
+
+        sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
+                           Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
+                           Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
+                           Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
         # print(f"Position Plot: {sim.Veh_Pos_plot}")
         # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
         # print(f"Acc Plot: {sim.Veh_Acc_plot}")
