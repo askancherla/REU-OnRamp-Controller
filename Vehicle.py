@@ -231,7 +231,8 @@ class Vehicle():
                 if self.id != i[6]:
                     continue
                 else:
-                    self.vl_id = i[0]
+                    ##Changing vl_id to vf_id
+                    self.vf_id = i[0]
                     count += 1      # if at least one merge CAV's vf_id = mainlane self id, count !=0
 
             # no merge CAV's vf_id == mainlane self.id and mainlane self.id is the first vehicle in the mainlane
@@ -261,7 +262,9 @@ class Vehicle():
                     #     f"CAV{self.id}'s vel is {self.Vel} from virtual platoon control")
                     # print(
                     #     f"CAV{self.id}'s acc is {self.Acc} from virtual platoon control")
-
+                    ## Setting vf_id and vl_id to 0
+                    self.vf_id = 0
+                    self.vl_id = 0
     # Function to update position and speed
 
     def updateStatus(self, dt):
