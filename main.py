@@ -43,17 +43,17 @@ if sim.check == 1:
     
     attackCase = [
        [-1],   # attackedVictim
-       [[2]],  # maliChannelSource
-       [[[[10, 50]]]],  # attackDuration:
+       [[1]],  # maliChannelSource
+       [[[[10, 20]]]],  # attackDuration:
        [[[['Pos']]]],  # attackChannel:
-       [[[['Cluster']]]],  # freqType:
-       [[[[[2,20]]]]],  # freqParaValue:
+       [[[['Continuous']]]],  # freqType:
+       [[[[[0]]]]],  # freqParaValue:
        [[[['Constant']]]],  # biasType:
-       [[[[[-50]]]]]   # biasParaValue:
+       [[[[[2]]]]]   # biasParaValue:
     ]
 
 
-    attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(allVehID = [1,2],
+    attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(allVehID = [-1, -2],
                                                                      mailChannelSource=1,
                                                                      duration_startT=10,
                                                                      duration_maxlength=20,
@@ -69,7 +69,9 @@ if sim.check == 1:
                                                                      allBiasParaValue=[1,10])
 
     attackCaseList = list(attackCaseList)
-    print(f"attackCaseList : {attackCaseList}")
+    #print(f"attackCaseList : {attackCaseList}")
+    ##print(attackCaseList.__len__)
+    print(attackCaseList[1])
     
     Pos_FIV_df_list = []
     Vel_FIV_df_list = []
@@ -126,10 +128,10 @@ if sim.check == 1:
     #                   Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
     #                   Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
     
-    sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
-                      Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
-                      Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
-                      Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
+    sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list,
+                      Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list,
+                      Pos_FIV_bias_df_list_VP=Pos_FIV_df_list_empty,
+                      Vel_FIV_bias_df_list_VP=Vel_FIV_df_list_empty)
     
     # for pos_fiv_df, vel_fiv_df in zip(Pos_FIV_df_list, Vel_FIV_df_list):
     #     sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
