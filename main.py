@@ -30,111 +30,43 @@ if sim.check == 1:
 
     # if we want to implement attacks
     attacker = CyberAttacker(vehicles)
-    # attackCase = [
-    #    [-1],   # attackedVictim
-    #    [[2]],  # maliChannelSource
-    #    [[[[10, 50]]]],  # attackDuration:
-    #    [[[['Pos']]]],  # attackChannel:
-    #    [[[['Continuous']]]],  # freqType:
-    #    [[[[[0]]]]],  # freqParaValue:
-    #    [[[['Constant']]]],  # biasType:
-    #    [[[[[-50]]]]]   # biasParaValue:
-    # ]
-    
     attackCase = [
-       [-1],   # attackedVictim
-       [[1]],  # maliChannelSource
-       [[[[10, 20]]]],  # attackDuration:
-       [[[['Pos']]]],  # attackChannel:
-       [[[['Continuous']]]],  # freqType:
-       [[[[[0]]]]],  # freqParaValue:
-       [[[['Constant']]]],  # biasType:
-       [[[[[2]]]]]   # biasParaValue:
+        [-1],   # attackedVictim
+        [[2]],  # maliChannelSource
+        [[[[10, 50]]]],  # attackDuration:
+        [[[['Pos']]]],  # attackChannel:
+        [[[['Continuous']]]],  # freqType:
+        [[[[[0]]]]],  # freqParaValue:
+        [[[['Constant']]]],  # biasType:
+        [[[[[-50]]]]]   # biasParaValue:
     ]
-
-
-    attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(allVehID = [-1, -2],
-                                                                     mailChannelSource=1,
-                                                                     duration_startT=10,
-                                                                     duration_maxlength=20,
-                                                                     duration_interval=10,
-                                                                     allMaliChannelList=[
-                                                                         'Pos'],
-                                                                     allFreqTypeList=[
-                                                                         'Continuous'],
-                                                                     freqValue=[
-                                                                         0],
-                                                                     allBiasTypeList=[
-                                                                         'Constant'],
-                                                                     allBiasParaValue=[1,10])
-
-    attackCaseList = list(attackCaseList)
-    #print(f"attackCaseList : {attackCaseList}")
-    ##print(attackCaseList.__len__)
-    print(attackCaseList[1])
-    
-    Pos_FIV_df_list = []
-    Vel_FIV_df_list = []
-
-    ######################
-    ### Using attackCaseList
-    #####################
-    
-    
-    # Iterate over each attack case and apply it
-    # for attackCase in attackCaseList:
-    #     pos_fiv_df, vel_fiv_df = attacker.mutAttackFalsifyInfoVectorGen(
-    #         attackCase, 0, simEndtime, simTimestep)
-    #     Pos_FIV_df_list.append(pos_fiv_df)
-    #     Vel_FIV_df_list.append(vel_fiv_df)
-        
     Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
-    attackCase, 0, simEndtime, simTimestep)
+        attackCase, 0, simEndtime, simTimestep)
+    # if we want to implement attacks, uncomment this part and comments the above part of no attack
 
+    def plot_results(FIV_df_list):
+        for i in range(len(FIV_df_list)):      # go through each victim
+            for column in FIV_df_list[i][1].columns:
+                plt.plot(FIV_df_list[i][1].index,
+                         FIV_df_list[i][1][column], label=column)
 
-    # def plot_results(FIV_df_list):
-    #     for attack_index in range(len(FIV_df_list)):  # Process each attack case
-    #         fig1, ax1 = plt.subplots()
-    #         print(f"Processing FIV_df_list[{attack_index}]")  # Debugging
-    #         if len(FIV_df_list[attack_index]) > 0:
-    #             victim_id = FIV_df_list[attack_index][0][0]
-    #             df = FIV_df_list[attack_index][0][1]
-    #             time = df.index * simTimestep  # Assuming time steps need to be scaled by simTimestep
-    #             for veh in vehicles:
-    #                 line_style = '--' if veh.lane == 1 else '-'
-    #                 ax1.plot(time, df[veh.id], label=f'Vehicle {veh.id}', linestyle=line_style)
+        # Adding labels and title
+        plt.xlabel('Control Time Step')
+        plt.ylabel('Bias Value')
+        plt.title(
+            f'Bias Value of Vel Channel on Victim {FIV_df_list[i][0]}')
 
-    #             ax1.set_ylabel('Position (m)')
-    #             ax1.set_xlabel('Time (s)')
-    #             ax1.set_title(f'Vehicle Positions Over Time for Attack Case {attack_index + 1}')
-    #             ax1.legend(loc='upper left')
+        # Adding a legend
+        plt.legend()
 
-    #             # Add rectangular zone
-    #             ax1.axhspan(-200, 0, color='grey', alpha=0.3, label='Acceleration Zone')
+        # Display the plot
+        plt.show()
 
-    #             # Add text label
-    #             ax1.text(100, -100, 'Acceleration Zone', fontsize=12, color='black',
-    #                      horizontalalignment='center', verticalalignment='center')
+    plot_results(Pos_FIV_df_list)
 
-    #             plt.tight_layout()
-    #             plt.show()
-
-    # plot_results(Pos_FIV_df_list)
-
-   # if we want to implement a single attack on any process, use the argument 'Pos_FIV_df_list' or 'Vel_FIV_df_list' based on which channel type you want to attack
-   # otherwise use the argument with '_empty'
-    # sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
-    #                   Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
-    #                   Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
-    #                   Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
-    
-    sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list,
-                      Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list,
-                      Pos_FIV_bias_df_list_VP=Pos_FIV_df_list_empty,
-                      Vel_FIV_bias_df_list_VP=Vel_FIV_df_list_empty)
-    
-    # for pos_fiv_df, vel_fiv_df in zip(Pos_FIV_df_list, Vel_FIV_df_list):
-    #     sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
-    #                       Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
-    #                       Pos_FIV_bias_df_list_VP=[pos_fiv_df],
-    #                       Vel_FIV_bias_df_list_VP=[vel_fiv_df])
+    # if we want to implement a single attack on any process, use the argument 'Pos_FIV_df_list' or 'Vel_FIV_df_list' based on which channel type you want to attack
+    # otherwise use the argument with '_empty'
+    sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
+                       Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
+                       Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
+                       Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
