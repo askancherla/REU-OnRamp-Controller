@@ -314,44 +314,44 @@ class Simulation:
         plt.tight_layout()
         plt.show()
 
-        # Plot Velocity
-        fig2, ax2 = plt.subplots()
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            ax2.plot(time, self.Veh_Vel_plot[veh.id],
-                     label=f'Vehicle {veh.id}', linestyle=line_style)
-        ax2.set_ylabel('Velocity (m/s)')
-        ax2.set_title('Vehicle Velocities Over Time')
-        ax2.legend(loc='upper left')
-        ax2.set_xlabel('Time (s)')
-        plt.tight_layout()
-        plt.show()
+        # ## Plot Velocity
+        # fig2, ax2 = plt.subplots()
+        # for veh in self.vehicles:
+        #     line_style = '--' if veh.lane == 1 else '-'
+        #     ax2.plot(time, self.Veh_Vel_plot[veh.id],
+        #              label=f'Vehicle {veh.id}', linestyle=line_style)
+        # ax2.set_ylabel('Velocity (m/s)')
+        # ax2.set_title('Vehicle Velocities Over Time')
+        # ax2.legend(loc='upper left')
+        # ax2.set_xlabel('Time (s)')
+        # plt.tight_layout()
+        # plt.show()
 
-        # Plot Acceleration
-        fig3, ax3 = plt.subplots()
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            ax3.plot(time, self.Veh_Acc_plot[veh.id],
-                     label=f'Vehicle {veh.id}', linestyle=line_style)
-        ax3.set_ylabel('Acceleration (m/s²)')
-        ax3.set_title('Vehicle Accelerations Over Time')
-        ax3.legend(loc='upper left')
-        ax3.set_xlabel('Time (s)')
-        plt.tight_layout()
-        plt.show()
+        # # Plot Acceleration
+        # fig3, ax3 = plt.subplots()
+        # for veh in self.vehicles:
+        #     line_style = '--' if veh.lane == 1 else '-'
+        #     ax3.plot(time, self.Veh_Acc_plot[veh.id],
+        #              label=f'Vehicle {veh.id}', linestyle=line_style)
+        # ax3.set_ylabel('Acceleration (m/s²)')
+        # ax3.set_title('Vehicle Accelerations Over Time')
+        # ax3.legend(loc='upper left')
+        # ax3.set_xlabel('Time (s)')
+        # plt.tight_layout()
+        # plt.show()
 
-        # Plot VL ID
-        fig4, ax4 = plt.subplots()
-        for veh in self.vehicles:
-            line_style = '--' if veh.lane == 1 else '-'
-            ax4.plot(time, self.Veh_vl_id_plot[veh.id],
-                     label=f'Vehicle {veh.id}', linestyle=line_style)
-        ax4.set_ylabel('Virtual Leader ID')
-        ax4.set_title('Vehicle Virtual Leader IDs Over Time')
-        ax4.legend(loc='upper left')
-        ax4.set_xlabel('Time (s)')
-        plt.tight_layout()
-        plt.show()
+        # # Plot VL ID
+        # fig4, ax4 = plt.subplots()
+        # for veh in self.vehicles:
+        #     line_style = '--' if veh.lane == 1 else '-'
+        #     ax4.plot(time, self.Veh_vl_id_plot[veh.id],
+        #              label=f'Vehicle {veh.id}', linestyle=line_style)
+        # ax4.set_ylabel('Virtual Leader ID')
+        # ax4.set_title('Vehicle Virtual Leader IDs Over Time')
+        # ax4.legend(loc='upper left')
+        # ax4.set_xlabel('Time (s)')
+        # plt.tight_layout()
+        # plt.show()
 
         # # Plot VF ID
         # fig5, ax5 = plt.subplots()

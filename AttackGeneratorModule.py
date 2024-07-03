@@ -159,6 +159,7 @@ class CyberAttacker():
                             # for each victim in each attack duration, multiple channels might be attacked
                             for C in range(len(attackChannel[V][S][D])):
                                 if attackChannel[V][S][D][C] == 'Pos':
+                                    #print(attackChannel[V][S][D][C])
                                     FIV_Pos = self.mutAttackFalsifyInfoVectorCal(attackDuration[V][S][D][0], t, freqType, freqParaValue, biasType,
                                                                                  biasParaValue, currVic=V, currSour=S, currDura=D, currChan=C)
                                     # check current victim (attackedVictim[V]), then find corresponding df, then replace the value to the corresponding place in the df
@@ -168,6 +169,7 @@ class CyberAttacker():
                                                                       maliChannelSource[V][S]] = FIV_Pos
 
                                 elif attackChannel[V][S][D][C] == 'Vel':
+                                    #print(attackChannel[V][S][D][C])
                                     FIV_Vel = self.mutAttackFalsifyInfoVectorCal(attackDuration[V][S][D][0], t, freqType, freqParaValue, biasType,
                                                                                  biasParaValue, currVic=V, currSour=S, currDura=D, currChan=C)
                                     for i in range(len(Vel_FIV_df_list)):
@@ -180,6 +182,152 @@ class CyberAttacker():
 
         return Pos_FIV_df_list, Vel_FIV_df_list
 
+    def mutAttackCaseGenerator_1Vic1Dura1Chan(self,
+                                               # a list. [veh.id for veh in self.vehicles] if you want to add all vehicles
+                                               allVehID,
+                                               mailChannelSource,
+                                               duration_startT,
+                                               duration_maxlength,
+                                               duration_interval,
+                                               allMaliChannelList,
+                                               allFreqTypeList,
+                                               freqValue,
+                                               allBiasTypeList,
+                                               allBiasParaValue
+                                               ):
+
+         # victim_num:         the number of victims,  only consider 1 victim
+         # source_num:         the number of source to victim, only consider 1 source
+         # duration_num:       the number of attackdurations, consider 1 only
+         # duration_startT:    start time of the attack duration, fixed
+         # duration_maxlength: the max length of duration
+         # duration_interval:  the increase interval of duration actual length
+         # allMaliChannelList: all channel types that are malicious
+         # allFreqTypeList:    all freq types we are going to implement (only consider 'Continuous' for now since the impact of continuous is likely more compared to Cluster)
+         # freqValue:          since we only consider 'Continuous' for now, it should be 0
+         # allBiasTypeList:    all bias types we are going to implement
+         # allBiasParaValue:   depend on the type of bias
+
+         victim_num = 1
+         source_num = 1
+         duration_num = 1
+
+         attackCaseList = []
+
+         ####################################################################
+         # 1. Generate all possible "attackVictim" and store them as a list
+         ####################################################################
+
+         # Generate all possible combinations for each specified victim vehicle number
+         # store all possible attackVictim list for different number of victims
+         victim_veh_tuple_all = []
+         for length in range(1, victim_num+1):
+             # generate all possible attackVictim list for all attackCases
+             victim_veh_tuple = itertools.combinations(allVehID, length)
+             victim_veh_tuple_all.extend(victim_veh_tuple)
+
+         # Convert the combinations from tuples to lists
+         attackVictimList = [list(combo)
+                             for combo in victim_veh_tuple_all]   # if victim_num=1 and allVehID = [veh.id for veh in self.vehicles], the result should be [[1], [2], [3], [-1], [-2]]
+         print(f"attackVictimList: {attackVictimList}")
+
+         #######################################################################
+         # 2. Generate all possible "maliChannelSource" and store them as a list
+         #    Only consider 1 maliChannelSource for 1 victim for now
+         #    (You have to make sure that the maliChannelSource is not same as the Victim,
+         #     or if they are the same, the bias would be 0)
+         #######################################################################
+         mailChannelSourceList = [[[mailChannelSource]] * victim_num]
+
+         #print(f"mailChannelSourceList : {mailChannelSourceList}")
+          
+
+         #######################################################################
+         # 2. Generate all possible "attackDuration" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         #attackDurationList = [[[[[duration_startT, duration_startT + duration_interval * i]]]]
+         #                      for i in range(int(duration_maxlength/duration_interval))]
+         attackDurationList = [[[[[10,20]]]]]
+
+         #print(f"attackDurationList: {attackDurationList}")
+
+         #######################################################################
+         # 3. Generate all possible "attackChannel" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         attackChannelList = [[[[['Pos']]]], [[[['Vel']]]]]
+
+         #######################################################################
+         # 4. Generate all possible "freqType" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         freqTypeList = [[[[['Continuous']]]]]
+
+         #######################################################################
+         # 5. Generate all possible "freqParaValue" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         freqParaValueList = [[[[[[0]]]]]]
+
+         #######################################################################
+         # 6. Generate all possible "biasType" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         biasTypeList = [[[[['Constant']]]]]
+
+         #######################################################################
+         # 7. Generate all possible "biasParaValue" and store them as a list
+         #    Only consider 1 attackDuration for 1 victim for now
+         #######################################################################
+
+         # For 'Constant' bias type, allBiasParaValue should have 3 elements
+         # 1st element shows the Bias we want to add initially
+         # 2nd element shows the Bias we want to add at the end
+         # 3rd element shows the step we increase the Bias value
+
+         initialBias = allBiasParaValue[0]
+         endBias = allBiasParaValue[len(allBiasParaValue)-1]
+         increaseStep =  1
+
+         biasParaValueList = [[[[[[initialBias+increaseStep*i]]]]]
+                              for i in range(int((endBias-initialBias)/increaseStep))]
+
+         print(f"biasParaValueList: {biasParaValueList}")
+
+         #######################################################################
+         # Generate all possible attackCase based on the 7 lists above
+         #######################################################################
+
+#         attackCaseList = [list(attackCase) for attackCase in itertools.product(attackVictimList, attackDurationList,
+                                                                                #attackChannelList, freqTypeList, freqParaValueList, biasTypeList, biasParaValueList)]
+         attackCaseList = itertools.product(attackVictimList, mailChannelSourceList, attackDurationList,
+                                                                                attackChannelList, freqTypeList, freqParaValueList, biasTypeList, biasParaValueList)
+
+         return attackCaseList
+
+    def plot_results(self, Pos_FIV_df_list):
+        for i in range(len(Pos_FIV_df_list)):      # go through each victim
+            for column in Pos_FIV_df_list[i][1].columns:
+                plt.plot(Pos_FIV_df_list[i][1].index,
+                         Pos_FIV_df_list[i][1][column], label=column)
+
+        # Adding labels and title
+        plt.xlabel('Control Time Step')
+        plt.ylabel('Bias Value')
+        plt.title(
+            f'Bias Value of Pos Channel on Victim {Pos_FIV_df_list[i][0]}')
+
+        # Adding a legend
+        plt.legend()
+
+        # Display the plot
+        plt.show()
 
 if __name__ == "__main__":
     vehicles = [
@@ -220,172 +368,35 @@ if __name__ == "__main__":
 
     attacker = CyberAttacker(vehicles)
 
-    # attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(duration_startT=10,
-    #                                                                 duration_maxlength=20,
-    #                                                                 duration_interval=10,
-    #                                                                 allMaliChannelList=[
-    #                                                                     'Pos', 'Vel'],
-    #                                                                 allFreqTypeList=[
-    #                                                                     'Continuous'],
-    #                                                                 freqValue=[
-    #                                                                     0],
-    #                                                                 allBiasTypeList=[
-    #                                                                     'Constant'],
-    #                                                                 allBiasParaValue=[1, 10, 1])
+    attackCaseList = attacker.mutAttackCaseGenerator_1Vic1Dura1Chan(allVehID = [1,2],
+                                                                     mailChannelSource=1,
+                                                                     duration_startT=10,
+                                                                     duration_maxlength=20,
+                                                                     duration_interval=10,
+                                                                     allMaliChannelList=[
+                                                                         'Pos'],
+                                                                     allFreqTypeList=[
+                                                                         'Continuous'],
+                                                                     freqValue=[
+                                                                         0],
+                                                                     allBiasTypeList=[
+                                                                         'Constant'],
+                                                                     allBiasParaValue=[1,10])
 
-    # print(attackCaseList)
+    #print(f"attackCaseList : {attackCaseList}" )
+    count = 0
+    for i in attackCaseList:
+     count = count + 1
+     if count > 3:
+      break
+     print("\n\n" + str(i))
+     attackCase = i
 
-    Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
+     Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
         attackCase, 0, 10, 0.1)
 
-    print(f"Pos_FIV_df_list: {Pos_FIV_df_list}")
+     print(f"Pos_FIV_df_list: {Pos_FIV_df_list}")
     # print(Vel_FIV_df_list)
 
-    def plot_results(Pos_FIV_df_list):
-        for i in range(len(Pos_FIV_df_list)):      # go through each victim
-            for column in Pos_FIV_df_list[i][1].columns:
-                plt.plot(Pos_FIV_df_list[i][1].index,
-                         Pos_FIV_df_list[i][1][column], label=column)
 
-        # Adding labels and title
-        plt.xlabel('Control Time Step')
-        plt.ylabel('Bias Value')
-        plt.title(
-            f'Bias Value of Pos Channel on Victim {Pos_FIV_df_list[i][0]}')
-
-        # Adding a legend
-        plt.legend()
-
-        # Display the plot
-        plt.show()
-
-    plot_results(Pos_FIV_df_list)
-    # plot_results(Vel_FIV_df_list, 'Velocity')
-
-
-######################################################
-# An example on how to generate a list of attackCases
-# Need to be debugged
-######################################################
-
-
-# def mutAttackCaseGenerator_1Vic1Dura1Chan(self,
-#                                               # a list. [veh.id for veh in self.vehicles] if you want to add all vehicles
-#                                               allVehID,
-#                                               duration_startT,
-#                                               duration_maxlength,
-#                                               duration_interval,
-#                                               allMaliChannelList,
-#                                               allFreqTypeList,
-#                                               freqValue,
-#                                               allBiasTypeList,
-#                                               allBiasParaValue
-#                                               ):
-
-#         # victim_num:         the number of victims,  only consider 1 victim
-#         # source_num:         the number of source to victim, only consider 1 source
-#         # duration_num:       the number of attackdurations, consider 1 only
-#         # duration_startT:    start time of the attack duration, fixed
-#         # duration_maxlength: the max length of duration
-#         # duration_interval:  the increase interval of duration actual length
-#         # allMaliChannelList: all channel types that are malicious
-#         # allFreqTypeList:    all freq types we are going to implement (only consider 'Continuous' for now since the impact of continuous is likely more compared to Cluster)
-#         # freqValue:          since we only consider 'Continuous' for now, it should be 0
-#         # allBiasTypeList:    all bias types we are going to implement
-#         # allBiasParaValue:   depend on the type of bias
-
-#         victim_num = 1
-#         source_num = 1
-#         duration_num = 1
-
-#         attackCaseList = []
-
-#         ####################################################################
-#         # 1. Generate all possible "attackVictim" and store them as a list
-#         ####################################################################
-
-#         # Generate all possible combinations for each specified victim vehicle number
-#         # store all possible attackVictim list for different number of victims
-#         victim_veh_tuple_all = []
-#         for length in range(1, victim_num+1):
-#             # generate all possible attackVictim list for all attackCases
-#             victim_veh_tuple = itertools.combinations(allVehID, length)
-#             victim_veh_tuple_all.extend(victim_veh_tuple)
-
-#         # Convert the combinations from tuples to lists
-#         attackVictimList = [list(combo)
-#                             for combo in victim_veh_tuple_all]   # if victim_num=1 and allVehID = [veh.id for veh in self.vehicles], the result should be [[1], [2], [3], [-1], [-2]]
-#         # print(f"attackVictimList: {attackVictimList}")
-
-#         #######################################################################
-#         # 2. Generate all possible "maliChannelSource" and store them as a list
-#         #    Only consider 1 maliChannelSource for 1 victim for now
-#         #    (You have to make sure that the maliChannelSource is not same as the Victim,
-#         #     or if they are the same, the bias would be 0)
-#         #######################################################################
-
-#         #######################################################################
-#         # 2. Generate all possible "attackDuration" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         attackDurationList = [[[[duration_startT, duration_startT + duration_interval * i]]]
-#                               for i in range(int(duration_maxlength/duration_interval))]
-
-#         # print(f"attackDurationList: {attackDurationList}")
-
-#         #######################################################################
-#         # 3. Generate all possible "attackChannel" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         attackChannelList = [[[['Pos']]], [[['Vel']]]]
-
-#         #######################################################################
-#         # 4. Generate all possible "freqType" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         freqTypeList = [[[['Continuous']]]]
-
-#         #######################################################################
-#         # 5. Generate all possible "freqParaValue" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         freqParaValueList = [[[[[0]]]]]
-
-#         #######################################################################
-#         # 6. Generate all possible "biasType" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         biasTypeList = [[[['Constant']]]]
-
-#         #######################################################################
-#         # 7. Generate all possible "biasParaValue" and store them as a list
-#         #    Only consider 1 attackDuration for 1 victim for now
-#         #######################################################################
-
-#         # For 'Constant' bias type, allBiasParaValue should have 3 elements
-#         # 1st element shows the Bias we want to add initially
-#         # 2nd element shows the Bias we want to add at the end
-#         # 3rd element shows the step we increase the Bias value
-
-#         initialBias = allBiasParaValue[0]
-#         endBias = allBiasParaValue[1]
-#         increaseStep = allBiasParaValue[2]
-
-#         biasParaValueList = [[[[[initialBias+increaseStep*i]]]]
-#                              for i in range(int((endBias-initialBias)/increaseStep))]
-
-#         # print(f"biasParaValueList: {biasParaValueList}")
-
-#         #######################################################################
-#         # Generate all possible attackCase based on the 7 lists above
-#         #######################################################################
-
-#         attackCaseList = [list(attackCase) for attackCase in itertools.product(attackVictimList, attackDurationList,
-#                                                                                attackChannelList, freqTypeList, freqParaValueList, biasTypeList, biasParaValueList)]
-
-#         return attackCaseList
+     attacker.plot_results(Pos_FIV_df_list)
