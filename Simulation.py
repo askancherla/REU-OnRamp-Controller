@@ -297,20 +297,32 @@ class Simulation:
         # Plot Position
         fig1, ax1 = plt.subplots()
         for veh in self.vehicles:
+            # Determine line style based on lane
             line_style = '--' if veh.lane == 1 else '-'
-            ax1.plot(time, self.Veh_Pos_plot[veh.id],
-                     label=f'Vehicle {veh.id}', linestyle=line_style)
+            
+            # Get the positions where position > 0 if lane is 1
+            if veh.lane == 1:
+                # Filter the time and position arrays
+                valid_indices = self.Veh_Pos_plot[veh.id] > 0
+                filtered_time = time[valid_indices]
+                filtered_positions = self.Veh_Pos_plot[veh.id][valid_indices]
+                ax1.plot(filtered_time, filtered_positions,
+                        label=f'Vehicle {veh.id}', linestyle=line_style)
+            else:
+                # Plot normally for other vehicles
+                ax1.plot(time, self.Veh_Pos_plot[veh.id],
+                        label=f'Vehicle {veh.id}', linestyle=line_style)
+
         ax1.set_ylabel('Position (m)')
-        ax1.set_title('Vehicle Positions Over Time')
+        ax1.set_title('Vehicle Positions Over Time in Mainlane')
         ax1.legend(loc='upper left')
         ax1.set_xlabel('Time (s)')
         # Add rectangular zone
-        ax1.axhspan(-200, 0, color='grey', alpha=0.3,
-                    label='Acceleration Zone')
+        ax1.axhspan(-200, 0, color='grey', alpha=0.3, label='Acceleration Zone')
 
         # Add text label
         ax1.text(100, -100, 'Acceleration Zone', fontsize=12, color='black',
-                 horizontalalignment='center', verticalalignment='center')
+                horizontalalignment='center', verticalalignment='center')
         plt.tight_layout()
         plt.show()
 
@@ -371,10 +383,9 @@ if __name__ == '__main__':
 
     vehicles = [
         Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
-        Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-370),
-        Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-400),
-        Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-380),
-        Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-430)
+        Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-270),
+        Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-300),
+        Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-280)
     ]
 
     simEndtime = 20
@@ -399,8 +410,8 @@ if __name__ == '__main__':
             [[[['Pos']]]],  # attackChannel:
             [[[['Continuous']]]],  # freqType:
             [[[[[0]]]]],  # freqParaValue:
-            [[[['Constant']]]],  # biasType:
-            [[[[[-50]]]]]   # biasParaValue:
+            [[[['Linear']]]],  # biasType:
+            [[[[[50,0]]]]]   # biasParaValue:
         ]
         Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
             attackCase, 0, simEndtime, simTimestep)
@@ -428,8 +439,8 @@ if __name__ == '__main__':
 
         sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
                            Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
-                           Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
-                           Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
+                           Pos_FIV_bias_df_list_VP=Pos_FIV_df_list_empty,
+                           Vel_FIV_bias_df_list_VP=Vel_FIV_df_list_empty)
         # print(f"Position Plot: {sim.Veh_Pos_plot}")
         # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
         # print(f"Acc Plot: {sim.Veh_Acc_plot}")

@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt
 
 vehicles = [
     Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
-    Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-370),
-    Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-400),
-    Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-380),
-    Vehicle(id=-2, lane=1, init_Vel=30, init_Pos=-430)
+    Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-270),
+    Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-300),
+    Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-280)
 ]
 
 simEndtime = 20
