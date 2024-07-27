@@ -325,6 +325,34 @@ class Simulation:
                 horizontalalignment='center', verticalalignment='center')
         plt.tight_layout()
         plt.show()
+        
+        # Plot Velocity
+        fig2, ax2 = plt.subplots()
+        for veh in self.vehicles:
+            # Determine line style based on lane
+            line_style = '--' if veh.lane == 1 else '-'
+            
+            # Get the positions where position > 0 if lane is 1
+            if veh.lane == 1:
+                # Filter the time and position arrays
+                valid_indices = self.Veh_Pos_plot[veh.id] > 0
+                filtered_time = time[valid_indices]
+                filtered_velocities = self.Veh_Vel_plot[veh.id][valid_indices]
+                ax2.plot(filtered_time, filtered_velocities,
+                        label=f'Vehicle {veh.id}', linestyle=line_style)
+            else:
+                # Plot normally for other vehicles
+                ax2.plot(time, self.Veh_Vel_plot[veh.id],
+                        label=f'Vehicle {veh.id}', linestyle=line_style)
+
+        ax2.set_ylabel('Velocity (m/s)')
+        ax2.set_title('Vehicle Velocities Over Time')
+        ax2.legend(loc='upper left')
+        ax2.set_xlabel('Time (s)')
+
+        
+        plt.tight_layout()
+        plt.show()
 
         # # Plot Velocity
         # fig2, ax2 = plt.subplots()
@@ -407,17 +435,17 @@ if __name__ == '__main__':
             [-1],   # attackedVictim
             [[2]],  # maliChannelSource
             [[[[10, 50]]]],  # attackDuration:
-            [[[['Pos']]]],  # attackChannel:
+            [[[['Vel']]]],  # attackChannel:
             [[[['Continuous']]]],  # freqType:
             [[[[[0]]]]],  # freqParaValue:
-            [[[['Linear']]]],  # biasType:
-            [[[[[-100,0]]]]]   # biasParaValue:
+            [[[['Constant']]]],  # biasType:
+            [[[[[100]]]]]   # biasParaValue:
         ]
         Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
             attackCase, 0, simEndtime, simTimestep)
         # if we want to implement attacks, uncomment this part and comments the above part of no attack
 
-        def plot_results(FIV_df_list):
+        def plot_results(FIV_df_list,channel):
             for i in range(len(FIV_df_list)):      # go through each victim
                 for column in FIV_df_list[i][1].columns:
                     plt.plot(FIV_df_list[i][1].index,
@@ -427,7 +455,7 @@ if __name__ == '__main__':
             plt.xlabel('Control Time Step')
             plt.ylabel('Bias Value')
             plt.title(
-                f'Bias Value of Vel Channel on Victim {FIV_df_list[i][0]}')
+                f'Bias Value of {channel} Channel on Victim {FIV_df_list[i][0]}')
 
             # Adding a legend
             plt.legend()
@@ -435,7 +463,9 @@ if __name__ == '__main__':
             # Display the plot
             plt.show()
 
-        plot_results(Pos_FIV_df_list)
+        plot_results(Pos_FIV_df_list, 'Pos')
+        plot_results(Vel_FIV_df_list, 'Vel')
+
 
         sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
                            Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
