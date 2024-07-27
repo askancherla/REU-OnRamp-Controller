@@ -411,7 +411,7 @@ if __name__ == '__main__':
             [[[['Continuous']]]],  # freqType:
             [[[[[0]]]]],  # freqParaValue:
             [[[['Linear']]]],  # biasType:
-            [[[[[50,0]]]]]   # biasParaValue:
+            [[[[[-100,0]]]]]   # biasParaValue:
         ]
         Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
             attackCase, 0, simEndtime, simTimestep)
@@ -439,8 +439,8 @@ if __name__ == '__main__':
 
         sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list_empty,
                            Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list_empty,
-                           Pos_FIV_bias_df_list_VP=Pos_FIV_df_list_empty,
-                           Vel_FIV_bias_df_list_VP=Vel_FIV_df_list_empty)
+                           Pos_FIV_bias_df_list_VP=Pos_FIV_df_list,
+                           Vel_FIV_bias_df_list_VP=Vel_FIV_df_list)
         # print(f"Position Plot: {sim.Veh_Pos_plot}")
         # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
         # print(f"Acc Plot: {sim.Veh_Acc_plot}")
