@@ -431,15 +431,25 @@ if __name__ == '__main__':
 
         # if we want to implement attacks
         attacker = CyberAttacker(vehicles)
+        # attackCase = [
+        #     [-1],   # attackedVictim
+        #     [[2]],  # maliChannelSource
+        #     [[[[10, 50]]]],  # attackDuration:
+        #     [[[['Vel']]]],  # attackChannel:
+        #     [[[['Continuous']]]],  # freqType:
+        #     [[[[[0]]]]],  # freqParaValue:
+        #     [[[['Linear']]]],  # biasType:
+        #     [[[[[20,0]]]]]   # biasParaValue:
+        # ]
         attackCase = [
             [-1],   # attackedVictim
             [[2]],  # maliChannelSource
             [[[[10, 50]]]],  # attackDuration:
-            [[[['Vel']]]],  # attackChannel:
-            [[[['Continuous']]]],  # freqType:
-            [[[[[0]]]]],  # freqParaValue:
-            [[[['Constant']]]],  # biasType:
-            [[[[[100]]]]]   # biasParaValue:
+            [[[['Pos', 'Vel']]]],  # attackChannel:
+            [[[['Continuous', 'Continuous']]]],  # freqType:
+            [[[[[0], [0]]]]],  # freqParaValue:
+            [[[['Constant', 'Constant']]]],  # biasType:
+            [[[[[-100],[4]]]]]   # biasParaValue:
         ]
         Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
             attackCase, 0, simEndtime, simTimestep)
@@ -475,3 +485,99 @@ if __name__ == '__main__':
         # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
         # print(f"Acc Plot: {sim.Veh_Acc_plot}")
         # print(f"vl_id Plot: {sim.Veh_vl_id_plot}")
+
+
+
+
+
+
+
+
+
+
+
+
+# if __name__ == '__main__':
+ 
+#     vehicles = [
+#         Vehicle(id=1, lane=0, init_Vel=25, init_Pos=-240),
+#         Vehicle(id=2, lane=0, init_Vel=27, init_Pos=-270),
+#         Vehicle(id=3, lane=0, init_Vel=26, init_Pos=-300),
+#         Vehicle(id=-1, lane=1, init_Vel=30, init_Pos=-280)        
+#     ]
+ 
+#     simEndtime = 20
+#     simTimestep = 0.1
+ 
+#     sim = Simulation(vehicles, simEndtime, simTimestep)
+#     if sim.check == 1:
+ 
+#         # if we don't want to implement attacks
+#         Pos_FIV_df_list_empty = [[0, pd.DataFrame(0.0, index=range(int(simEndtime / simTimestep)), columns=[
+#             veh.id for veh in vehicles])]]
+#         Vel_FIV_df_list_empty = [[0, pd.DataFrame(0.0, index=range(int(simEndtime / simTimestep)), columns=[
+#             veh.id for veh in vehicles])]]
+#         # if we don't want to implement attacks, uncomment this part and comments the next part of attacks
+ 
+#         # if we want to implement attacks
+#         attacker = CyberAttacker(vehicles)
+#         # attackCase = [
+#         #     [-1],   # attackedVictim
+#         #     [[2]],  # maliChannelSource
+#         #     [[[[10, 50]]]],  # attackDuration:
+#         #     [[[['Vel']]]],  # attackChannel:
+#         #     [[[['Continuous']]]],  # freqType:
+#         #     [[[[[0]]]]],  # freqParaValue:
+#         #     [[[['Linear']]]],  # biasType:
+#         #     [[[[[20,0]]]]]   # biasParaValue:
+#         # ]
+ 
+#         attackCase = [
+#             [-1],   # attackedVictim
+#             [[2]],  # maliChannelSource
+#             [[[[10, 50]]]],  # attackDuration:
+#             [[[['Pos', 'Vel']]]],  # attackChannel:
+#             [[[['Continuous', 'Continuous']]]],  # freqType:
+#             [[[[[0], [0]]]]],  # freqParaValue:
+#             [[[['Constant', 'Linear']]]],  # biasType:
+#             [[[[[-50],[20,0]]]]]   # biasParaValue:
+#         ]
+ 
+#         Pos_FIV_df_list, Vel_FIV_df_list = attacker.mutAttackFalsifyInfoVectorGen(
+#             attackCase, 0, simEndtime, simTimestep)
+#         # if we want to implement attacks, uncomment this part and comments the above part of no attack
+ 
+#         def plot_results(FIV_df_list, channel):
+#             for i in range(len(FIV_df_list)):      # go through each victim
+#                 for column in FIV_df_list[i][1].columns:
+#                     plt.plot(FIV_df_list[i][1].index,
+#                              FIV_df_list[i][1][column], label=column)
+ 
+#             # Adding labels and title
+#             plt.xlabel('Control Time Step')
+#             plt.ylabel('Bias Value')
+#             plt.title(
+#                 f'Bias Value of {channel} Channel on Victim {FIV_df_list[i][0]}')
+ 
+#             # Adding a legend
+#             plt.legend()
+ 
+#             # Display the plot
+#             plt.show()
+ 
+#         plot_results(Pos_FIV_df_list, 'Pos')
+#         plot_results(Vel_FIV_df_list, 'Vel')
+ 
+#         sim.mergeSimulator(Pos_FIV_bias_df_list_speedCoop=Pos_FIV_df_list,
+#                            Vel_FIV_bias_df_list_speedCoop=Vel_FIV_df_list,
+#                            Pos_FIV_bias_df_list_VP=Pos_FIV_df_list_empty,
+#                            Vel_FIV_bias_df_list_VP=Vel_FIV_df_list_empty)
+#         # print(f"Position Plot: {sim.Veh_Pos_plot}")
+#         # print(f"Velocity Plot: {sim.Veh_Vel_plot}")
+#         # print(f"Acc Plot: {sim.Veh_Acc_plot}")
+#         # print(f"vl_id Plot: {sim.Veh_vl_id_plot}")
+
+
+
+
+
